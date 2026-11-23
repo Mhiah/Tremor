@@ -4,6 +4,8 @@
 
 Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Reactive Omni for the Reactive Omni Buildathon, Track 1: *Every Second Counts*.
 
+**Live dashboard:** [tremor-dashboard-etc3.vercel.app](https://tremor-dashboard-etc3.vercel.app) shows the loop, the experiment results and the pool's current fee, read live from Unichain Sepolia.
+
 > **Status: live on testnet, experiment done.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in 2 to 3 seconds, with no bot or server. Across 11 live market moves, LPs in the Tremor pool lost about 82% less to arbitrage than LPs in an identical static pool.
 
 ---
@@ -196,6 +198,8 @@ Current result: **49 tests passing**.
 | Tremor pool (mode D) | Unichain Sepolia | pool ID `0x6e2eeb6d…0d178` |
 
 The test tokens can be minted by anyone; they exist only to make a repeatable experiment.
+
+**Verified source.** TremorReactive, ReferenceStore, TremorHook and PriceSource are verified on [Sourcify](https://sourcify.dev) with an exact match (creation and runtime bytecode), so their source is readable on Reactscan, Uniscan and Basescan.
 
 ### First full loop, on-chain
 
