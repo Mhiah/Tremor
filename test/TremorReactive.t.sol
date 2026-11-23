@@ -269,6 +269,17 @@ contract TremorReactiveTest is Test {
         assertEq(price, 0.5e18);
     }
 
+    function test_setSourceTransform() public {
+        rc.setSourceTransform(1, true, 1e18);
+        _react(_oracleLog(4e18));
+        (uint256 price,,,,) = _lastPayload();
+        assertEq(price, 0.25e18);
+
+        vm.prank(address(0xBAD));
+        vm.expectRevert(TremorReactive.NotOwner.selector);
+        rc.setSourceTransform(1, false, 1e18);
+    }
+
     function test_noRecipientMeansNoCallback() public {
         rc.setRecipient(0, address(0));
         _react(_oracleLog(1e18));

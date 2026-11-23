@@ -284,6 +284,17 @@ contract TremorReactive is AbstractReactive {
         emit RecipientSet(chainId_, recipient_);
     }
 
+    event SourceTransformSet(uint8 indexed source, bool invert, uint256 scaleX18);
+
+    /// @notice Sets how a source's price is converted into the destination pool's orientation and units.
+    /// @dev Needed because token order (currency0/currency1) on Unichain is only known once its tokens exist.
+    function setSourceTransform(uint8 i, bool invert, uint256 scaleX18) external onlyOwner {
+        if (i > 1 || scaleX18 == 0) revert InvalidSource();
+        _sources[i].invert = invert;
+        _sources[i].scaleX18 = scaleX18;
+        emit SourceTransformSet(i, invert, scaleX18);
+    }
+
     function setParams(Params calldata params_) external onlyOwner {
         _setParams(params_);
     }
