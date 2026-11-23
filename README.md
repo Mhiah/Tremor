@@ -4,7 +4,7 @@
 
 Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Reactive Omni for the Reactive Omni Buildathon, Track 1: *Every Second Counts*.
 
-> **Status: live on testnet.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in about 3 seconds, with no bot or server. The experiment (many price moves, LP value kept, latency curve) is next.
+> **Status: live on testnet, experiment done.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in 2 to 3 seconds, with no bot or server. Across 11 live market moves, LPs in the Tremor pool lost about 82% less to arbitrage than LPs in an identical static pool.
 
 ---
 
@@ -95,6 +95,45 @@ Every swap emits a `FeeQuoted` event with the gap, confidence, fee and the reaso
 | Wasted callbacks | Small moves are filtered out on Lasna before a callback is paid for |
 | Wrong pool type | The hook refuses pools without dynamic fees, and pools it hasn't been configured for |
 
+## Results: the live experiment
+
+Tremor was tested live on testnet against an identical pool without it. Every market move was tested against seven pairs of pools at once; each pair holds one **static** pool (normal 0.30% fee) and one **Tremor** pool, the same in every other way. For each pair, an arbitrage bot traded both pools toward the new market price after a set reaction time.
+
+**LP loss** is what the arbitrage bot made, valued at the market price. That is exactly what the pool's LPs lost compared with a pool that always had the right price.
+
+![LP loss to arbitrage, static pool vs Tremor pool, over 11 market moves](experiment/charts/lp-loss-by-move.png)
+
+| What we measured | Result |
+| --- | --- |
+| Full loop, Base event to Unichain callback | **2 to 3 s** (median 3 s over 11 moves, from block timestamps) |
+| LP loss, bots that traded with Tremor's update in place | **about 82% lower** in the Tremor pool than in the static pool |
+| LP loss, every bot trade (77 trades) | **97% lower** in the Tremor pool |
+| Bots that planned their trade on the old fee | lost money in the Tremor pool, so its LPs came out ahead |
+| Ordinary trades away from the reference | normal 0.30% fee, every time |
+
+**What the numbers mean**
+
+- **Rational arbitrage after the update lands.** The bot reads the fee before trading and stops where trading stops paying. Tremor's surcharge takes most of the gap, so LPs keep most of what they would have lost. The pool still gets corrected, because the bot still trades.
+- **Bots that raced the update.** Some bots read the old fee, then their trade landed after Tremor's update. They paid the surcharge on a trade sized for the normal fee, and lost money. That is why the all-trades figure is above the rational-bot figure.
+- **Speed.** Reactive's loop landed every update in 2 to 3 seconds. In our runs, every bot trade landed after it, including bots that fired the instant the market moved, because our bots run over public RPC endpoints and needed 6 to 12 seconds to land a trade.
+
+**Honest limits**
+
+- The market, the price feed and the arbitrage bots are our own scripts on testnet. Real markets move without warning and real arbitrageurs are faster.
+- A professional arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. Tremor does not stop that; the hook's tests show that case, and the faster Reactive's loop, the smaller that window.
+- 11 market moves is a small sample, limited by testnet funds. The runner is in the repo, so anyone can run more.
+
+The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves). Every row links to its transactions.
+
+### Run the experiment yourself
+
+```bash
+pip install web3 matplotlib
+set -a; source .env; set +a   # PRIVATE_KEY plus the addresses printed by the deploy scripts
+python3 experiment/run.py --delays 0,0.5,1,1.5,2,3,5 --moves 5
+python3 experiment/chart.py
+```
+
 ## Repository layout
 
 ```
@@ -105,6 +144,11 @@ src/
   TremorHook.sol              Uniswap v4 hook (Unichain Sepolia)
   interfaces/IReferenceSource.sol
   libraries/TremorFeeMath.sol The fee maths, kept separate so it can be tested on its own
+script/                       Deploy scripts for all three chains, plus the extra experiment pools
+experiment/
+  run.py                      Live experiment runner
+  chart.py                    Draws the results chart
+  results/                    Raw data from each run
 test/
   TremorHook.t.sol            Hook tests against the real v4 PoolManager, including real swaps
   TremorFeeMath.t.sol         Fee maths, including a fuzz test that arbitrage always keeps a share

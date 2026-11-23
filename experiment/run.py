@@ -2,12 +2,12 @@
 """
 Tremor experiment runner.
 
-Each trial:
+Each market move (all seven pool pairs are tested on the same move):
   1. The market moves on Base Sepolia: the Base v4 pool is swapped to a new price and the
      PriceSource feed reports the same price.
   2. Reactive Lasna validates the move and calls back the ReferenceStore on Unichain Sepolia.
-  3. After a chosen reaction delay, an arbitrage bot trades both Unichain pools toward the new
-     price: the STATIC control pool and the Tremor pool. The bot is rational: it reads the fee it
+  3. Seven bots, one per pool pair, each react a set time after the market moved (0 to 8 s) and
+     trade both pools of their pair toward the new price: the STATIC control pool and the Tremor pool. The bot is rational: it reads the fee it
      will pay (hook.quoteFee) and stops where further trading stops being profitable.
   4. We record what the bot made in each pool, valued at the market price. That profit is exactly
      what the pool's LPs lost to arbitrage compared with a pool that always had the right price.
@@ -19,7 +19,7 @@ lands; slower ones pay the surcharge. Plotting LP loss against delay gives the l
 
 Usage:
   set -a; source <deployer env>; source <deployed env>; set +a
-  python3 experiment/run.py --delays 0.5,1,2,3,4,6,8 --per-delay 6
+  python3 experiment/run.py --delays 0.5,1,2,3,4,6,8 --moves 6
 Outputs experiment/results/trials.csv and experiment/results/summary.json.
 """
 import argparse
@@ -193,6 +193,18 @@ class Tremor:
         return h, {"pool": which, "quotedFee": fee, "reason": reason, "gapPips": gap, "conf": conf,
                    "refSeq": seq, "poolPriceBefore": float(p)}
 
+    def arb_key(self, name, key, market):
+        """Rational arbitrage of one pool toward `market`: reads the fee first, stops where profit ends."""
+        p = self.pool_price(name)
+        zero_for_one = market < p
+        fee, reason, gap, conf, adverse, seq = self.hook.functions.quoteFee(key, zero_for_one).call()
+        f = Decimal(fee) / Decimal(10**6)
+        stop = market / (1 + f) if not zero_for_one else market / (1 - f)
+        if (not zero_for_one and stop <= p) or (zero_for_one and stop >= p):
+            return None, {"quotedFee": fee, "reason": reason}
+        h, _ = self.swap_to(self.uni, self.uni_router, key, p, market, stop)
+        return h, {"quotedFee": fee, "reason": reason}
+
     def swap_result(self, receipt, market):
         for lg in receipt["logs"]:
             if norm(lg["topics"][0]) == norm(SWAP_TOPIC):
@@ -263,21 +275,37 @@ class RefWatcher(threading.Thread):
             time.sleep(0.2)
 
 
+# Seven static/Tremor pool pairs, identical except tick spacing. One market move is tested against
+# all of them at once, each pair arbitraged after a different bot reaction delay.
+PAIRS = [(60, 30), (10, 12), (15, 18), (20, 27), (31, 36), (45, 53), (54, 62)]
+
+
+def pool_id(key):
+    from eth_abi import encode
+    return Web3.keccak(encode(["address", "address", "uint24", "int24", "address"], list(key))).hex()
+
+
 def run(args):
     env = dict(os.environ)
     t = Tremor(env)
     os.makedirs(RESULTS, exist_ok=True)
     rng = random.Random(args.seed)
     delays = [float(x) for x in args.delays.split(",")]
-    schedule = [d for d in delays for _ in range(args.per_delay)]
-    rng.shuffle(schedule)
+    assert len(delays) <= len(PAIRS), "one pool pair per delay"
+    tok0, tok1, hook = t.static_key[0], t.static_key[1], t.static_key[4]
+    pairs = []
+    for (ss, ts), d in zip(PAIRS, delays):
+        sk, tk = (tok0, tok1, DYNAMIC_FEE, ss, hook), (tok0, tok1, DYNAMIC_FEE, ts, hook)
+        t.pool_ids[f"s{ss}"] = norm(pool_id(sk))
+        t.pool_ids[f"t{ts}"] = norm(pool_id(tk))
+        pairs.append({"delay": d, "static": (f"s{ss}", sk), "tremor": (f"t{ts}", tk)})
 
     market = t.pool_price("base")
     rows = []
-    print(f"start market {float(market):.2f}, {len(schedule)} trials")
-    _reset_unichain(t, market)
+    print(f"start market {float(market):.2f}, {args.moves} moves x {len(pairs)} delays")
+    _reset_all(t, pairs, market)
 
-    for i, delay in enumerate(schedule):
+    for i in range(args.moves):
         move = Decimal(str(rng.uniform(args.min_move, args.max_move))) * (1 if rng.random() < 0.5 else -1)
         if market > 3300:
             move = -abs(move)
@@ -286,60 +314,80 @@ def run(args):
         target = (market * (1 + move)).quantize(Decimal("0.0001"))
         before = t.latest_ref()["sequence"]
 
-        # 1. Market moves on Base.
-        t0 = time.time()
+        # 1. The market moves on Base.
         watcher = RefWatcher(t, before, target)
         watcher.start()
+        t_move = time.time()  # the clock starts when the market moves (the Base trade is sent)
         h_swap, h_feed = t.move_market(target)
-        r_swap = t.base.wait(h_swap)
-        t_base = time.time()
-        r_feed = t.base.wait(h_feed)
-        base_ts = block_ts(t.base.w3, r_swap)
 
-        # 2. Bot waits its reaction delay, then arbitrages both pools at the same moment.
-        time.sleep(max(0.0, delay - (time.time() - t_base)))
-        t_arb = time.time()
-        arb_txs = {}
-        meta = {}
-        for which in ("static", "tremor"):
-            h, m = t.arb(which, target)
-            meta[which] = m
-            if h:
-                arb_txs[which] = h
-        results = {}
-        for which, h in arb_txs.items():
-            r = t.uni.wait(h)
-            results[which] = t.swap_result(r, target) or {}
-            results[which]["tx"] = norm(h)
-            results[which]["blockTs"] = block_ts(t.uni.w3, r)
+        # 2. One bot per pair, each reacting a set time after the market moved; both pools of a pair together.
+        #    A delay of 0 is a bot that sees the new price at the same moment (for example, on another venue).
+        t_base = t_move
+        out = {}
+
+        def bot(pair):
+            time.sleep(max(0.0, pair["delay"] - (time.time() - t_base)))
+            fired = time.time()
+            sent = {}
+            for mode in ("static", "tremor"):
+                name, key = pair[mode]
+                h, m = t.arb_key(name, key, target)
+                sent[mode] = (h, m)
+            res = {"fired_after_s": round(fired - t_base, 2)}
+            for mode, (h, m) in sent.items():
+                r = {"quotedFee": m.get("quotedFee"), "reason": m.get("reason")}
+                if h:
+                    rc = t.uni.wait(h)
+                    r.update(t.swap_result(rc, target) or {})
+                    r["tx"] = norm(h)
+                    r["blockTs"] = block_ts(t.uni.w3, rc)
+                res[mode] = r
+            out[pair["delay"]] = res
+
+        threads = [threading.Thread(target=bot, args=(p,)) for p in pairs]
+        for th in threads:
+            th.start()
+        r_swap = t.base.wait(h_swap)
+        t.base.wait(h_feed)
+        base_ts = block_ts(t.base.w3, r_swap)
+        for th in threads:
+            th.join()
 
         # 3. When did the validated reference land on Unichain?
         seen, ref, uni_ts, uni_tx = wait_reference(t, before, target)
         watcher.join(timeout=45)
         if watcher.seen_at:
             seen = watcher.seen_at
+        loop_wall = round(seen - t_base, 2) if seen else None
 
-        row = {
-            "trial": i + 1, "delay_s": delay, "move_pct": float(move * 100), "market_before": float(market),
-            "market_after": float(target), "base_swap_tx": norm(h_swap), "base_feed_tx": norm(h_feed),
-            "base_ts": base_ts, "ref_tx": uni_tx, "ref_ts": uni_ts, "ref_conf": ref["conf"] if ref else None,
-            "loop_block_s": (uni_ts - base_ts) if uni_ts else None,
-            "loop_wall_s": round(seen - t_base, 2) if seen else None,
-            "arb_after_base_s": round(t_arb - t_base, 2),
-        }
-        for which in ("static", "tremor"):
-            m, res = meta[which], results.get(which, {})
-            row[f"{which}_fee_bps"] = (res.get("feePips", m.get("quotedFee", 0))) / 100
-            row[f"{which}_reason"] = m.get("reason")
-            row[f"{which}_lp_loss_tusd"] = res.get("arbProfit", 0.0)
-            row[f"{which}_tx"] = res.get("tx")
-        rows.append(row)
-        print(f"[{i + 1}/{len(schedule)}] move {row['move_pct']:+.2f}% delay {delay}s | loop {row['loop_block_s']}s "
-              f"(wall {row['loop_wall_s']}s) | LP loss static {row['static_lp_loss_tusd']:.2f} "
-              f"tremor {row['tremor_lp_loss_tusd']:.2f} tUSD | tremor fee {row['tremor_fee_bps']} bps")
+        for pair in pairs:
+            res = out.get(pair["delay"], {})
+            row = {
+                "move": i + 1, "delay_s": pair["delay"], "fired_after_s": res.get("fired_after_s"),
+                "move_pct": float(move * 100), "market_before": float(market), "market_after": float(target),
+                "base_swap_tx": norm(h_swap), "base_feed_tx": norm(h_feed), "base_ts": base_ts,
+                "ref_tx": uni_tx, "ref_ts": uni_ts, "ref_conf": ref["conf"] if ref else None,
+                "loop_block_s": (uni_ts - base_ts) if uni_ts else None, "loop_wall_s": loop_wall,
+            }
+            for mode in ("static", "tremor"):
+                r = res.get(mode, {})
+                row[f"{mode}_fee_bps"] = (r.get("feePips", r.get("quotedFee") or 0)) / 100
+                row[f"{mode}_reason"] = r.get("reason")
+                row[f"{mode}_lp_loss_tusd"] = r.get("arbProfit", 0.0)
+                row[f"{mode}_tx"] = r.get("tx")
+            tb = res.get("tremor", {}).get("blockTs")
+            row["tremor_trade_before_reference"] = (tb < uni_ts) if (tb and uni_ts) else None
+            row["tremor_trade_ts"] = tb
+            rows.append(row)
+        print(f"move {i + 1}/{args.moves}: {float(move * 100):+.2f}% | loop {rows[-1]['loop_block_s']}s "
+              f"(wall {loop_wall}s)")
+        for pair in pairs:
+            r = [x for x in rows if x["move"] == i + 1 and x["delay_s"] == pair["delay"]][0]
+            print(f"   delay {pair['delay']:>4}s: static loss {r['static_lp_loss_tusd']:>9.2f} | tremor loss "
+                  f"{r['tremor_lp_loss_tusd']:>9.2f} | tremor fee {r['tremor_fee_bps']:>6} bps")
 
-        # 4. Housekeeping: reset both Unichain pools to the market price (not measured).
-        _reset_unichain(t, target)
+        # 4. Housekeeping: reset every pool to the market price (not measured).
+        _reset_all(t, pairs, target)
         market = target
         _write(rows)
         time.sleep(args.cooldown)
@@ -348,6 +396,20 @@ def run(args):
     with open(os.path.join(RESULTS, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
     print(json.dumps(summary, indent=2))
+
+
+def _reset_all(t, pairs, price):
+    """Bring every pool exactly to `price`. Housekeeping only; never counted in results."""
+    hashes = []
+    for pair in pairs:
+        for mode in ("static", "tremor"):
+            name, key = pair[mode]
+            p = t.pool_price(name)
+            if abs(p - price) / price > Decimal("0.00005"):
+                h, _ = t.swap_to(t.uni, t.uni_router, key, p, price)
+                hashes.append(h)
+    for h in hashes:
+        t.uni.wait(h)
 
 
 def _reset_unichain(t, price):
@@ -408,7 +470,7 @@ def _summarise(rows):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--delays", default="0.5,1,2,3,4,6,8")
-    ap.add_argument("--per-delay", type=int, default=6)
+    ap.add_argument("--moves", type=int, default=6)
     ap.add_argument("--min-move", type=float, default=0.01)
     ap.add_argument("--max-move", type=float, default=0.03)
     ap.add_argument("--cooldown", type=float, default=2.0)
