@@ -4,7 +4,7 @@
 
 Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Reactive Omni for the Reactive Omni Buildathon, Track 1: *Every Second Counts*.
 
-> **Status: in progress.** All four contracts are written and tested: the Base price source, the Reactive validation engine on Lasna, the Unichain callback receiver and the Uniswap v4 hook. Deployment, the full live loop and the experiment are next. This README grows as each part lands.
+> **Status: live on testnet.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in about 3 seconds, with no bot or server. The experiment (many price moves, LP value kept, latency curve) is next.
 
 ---
 
@@ -118,6 +118,8 @@ test/
 
 Requires [Foundry](https://book.getfoundry.sh/).
 
+To deploy your own copy, set `PRIVATE_KEY` and run, in order: `script/DeployBase.s.sol` (Base Sepolia), `script/DeployReactive.s.sol` (Lasna), `script/DeployUnichain.s.sol` (Unichain Sepolia), then `script/ConfigureReactive.s.sol` (Lasna). Each script lists the environment values it needs from the one before.
+
 ```bash
 git clone --recurse-submodules https://github.com/Mhiah/Tremor
 cd Tremor
@@ -125,7 +127,7 @@ forge build
 forge test
 ```
 
-Current result: **48 tests passing**.
+Current result: **49 tests passing**.
 
 ## Networks
 
@@ -135,7 +137,43 @@ Current result: **48 tests passing**.
 | Validation engine | Reactive Lasna | 5318007 |
 | Hook and receiver | Unichain Sepolia | 1301 |
 
-Deployed addresses and transaction hashes will be listed here once deployed.
+## Live deployment (testnet)
+
+| Contract | Network | Address |
+| --- | --- | --- |
+| tETH / tUSD test tokens | Base Sepolia | `0x64419165D8e0e6fC7Edb69cB1c9061FF55dfa738` / `0xC4bf9ca099A4537E82b8b8aaDEBE69053C0b6181` |
+| tETH/tUSD v4 pool (source 1) | Base Sepolia | PoolManager `0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`, pool ID `0xded3b395…ad5b4` |
+| PriceSource feed (source 2) | Base Sepolia | `0x813737EC15992C390E9C6471851B3c92FcCB4758` |
+| TremorReactive | Reactive Lasna | `0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512` |
+| ReferenceStore | Unichain Sepolia | `0x508f12C53d3e57473291c544Df070A5e8B0464C5` |
+| TremorHook | Unichain Sepolia | `0x6c19C2F3F2F8e976b6799d40c5049EcFEb22a080` |
+| tETH / tUSD test tokens | Unichain Sepolia | `0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512` / `0x64419165D8e0e6fC7Edb69cB1c9061FF55dfa738` |
+| Static pool (mode A, control) | Unichain Sepolia | pool ID `0xf3709172…0836b` |
+| Tremor pool (mode D) | Unichain Sepolia | pool ID `0x6e2eeb6d…0d178` |
+
+The test tokens can be minted by anyone; they exist only to make a repeatable experiment.
+
+### First full loop, on-chain
+
+The market moved from 3,000 to 3,060 tUSD per tETH (+2%) on Base. Each update crossed three chains with no bot or server involved:
+
+| Step | Base Sepolia (origin) | Reactive Lasna (validation) | Unichain Sepolia (callback) | Base event → Unichain |
+| --- | --- | --- | --- | --- |
+| Pool swap moves price to 3,060 | `0xb2a1ada23158938a91b3c99422455ab77edef10853ebf006d49b1e96547396fb` | `0xdcc2123f9c78309987ac89404d33261b7d4bada0c7a6564acd10fc3920ee37e7` (one source, 50% confidence) | `0x2350493ecca5a41df54108beb20fcddb5590449f883e1158cc39bb0fa848b769` | 3 s |
+| Feed confirms 3,060 | `0xb0c5ae10222abba30c5413b7d1b79d37bee8e4f303446eb2fc000353c3659379` | `0xf3c610ee91abc73e6c8f5d65dd48c5f671710fdc1cc6fa87ff8ba08cfb517bbe` (sources agree, 100% confidence) | `0xff01afad8cc7a572d76bc69afd01f75e1817cb14a08b477da2fe1cad69e0abf4` | 3 s |
+
+Latency here is measured from on-chain block timestamps, which have one-second resolution. The experiment will report medians over many runs.
+
+### First live arbitrage, same trade into both pools
+
+With the Unichain pools still at 3,000 and the reference at 3,060, the same 1,000 tUSD purchase of tETH went into each pool:
+
+| Pool | Fee charged | tETH received | Transaction |
+| --- | --- | --- | --- |
+| Static (mode A) | 30 bps | 0.33233 | `0x9d7f0400290e3be4dfb4a64c6aa432de8fde9d7bce2713ee5acde38fd31cc063` |
+| Tremor (mode D) | 86 bps | 0.33046 | `0x63309a5ac93ae5247769c62b3a52020c4ee051663202266b93182537cf1bc4c6` |
+
+The arbitrage trade paid 56 bps more in the Tremor pool, and that difference stayed with the LPs. The surcharge was below the full rule's 118 bps because confidence had faded with the reference's age by the time of the trade, exactly as designed. An ordinary trade in the other direction was quoted the normal 30 bps.
 
 ## Built with
 
