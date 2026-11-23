@@ -1,5 +1,7 @@
 # Tremor
 
+[![tests](https://github.com/Mhiah/Tremor/actions/workflows/test.yml/badge.svg)](https://github.com/Mhiah/Tremor/actions/workflows/test.yml)
+
 **Tremor makes arbitrageurs pay LPs for the gap, using Reactive to bring the real price across chains in about a second.**
 
 Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Reactive Omni for the Reactive Omni Buildathon, Track 1: *Every Second Counts*.
@@ -127,6 +129,22 @@ Tremor was tested live on testnet against an identical pool without it. Every ma
 
 The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves). Every row links to its transactions.
 
+### Live manipulation test
+
+What if someone controls one price source and pushes it away from the market? Tremor should refuse to charge on a price it can't trust.
+
+The test pushed the price feed 5% above the market while the Base pool stayed at the real price. Lasna saw the two sources 5% apart, published the reference with **0% confidence**, and a trade toward the fake price in the Tremor pool paid the **normal 0.30%**, not the 1.78% it would have paid had the fake price been trusted.
+
+| Step | Network | Transaction |
+| --- | --- | --- |
+| Base pool trades at the real price (2,986) | Base Sepolia | `0x2255b2dd385a8692e814e495170135f60696e35e37237d1ec2cfb24d054aabd3` |
+| Feed pushed to a fake 3,136 | Base Sepolia | `0x402de3288cc33fe63f89fbe0ec9cad9679641b321a3e00408921bb26066e6e22` |
+| Lasna: sources 5% apart, 0% confidence | Reactive Lasna | `0x5c80bfbddafe7bc74dfc316a6c0f34dcb301c8d63328f48909017365b14ca0d9` |
+| Reference lands on Unichain at 0% | Unichain Sepolia | `0x43778af609bac92f3dc0eb8278ad9654786ad04422174738d1ea92989883fa47` |
+| Trade toward the fake price pays 0.30% (reason: low confidence) | Unichain Sepolia | `0xce49b20d942a749a102deb545b3381584f65b71a3b44d45fbfc34564750a0082` |
+
+The trade-off: an attacker who can move one source can switch the surcharge off, but never on. The worst case is a pool that behaves like an ordinary Uniswap pool. Full record: `experiment/results/manipulation.json`.
+
 ### Run the experiment yourself
 
 ```bash
@@ -134,6 +152,7 @@ pip install web3 matplotlib
 set -a; source .env; set +a   # PRIVATE_KEY plus the addresses printed by the deploy scripts
 python3 experiment/run.py --delays 0,0.5,1,1.5,2,3,5 --moves 5
 python3 experiment/chart.py
+python3 experiment/manipulation.py   # the live manipulation test
 ```
 
 ## Repository layout
@@ -149,6 +168,7 @@ src/
 script/                       Deploy scripts for all three chains, plus the extra experiment pools
 experiment/
   run.py                      Live experiment runner
+  manipulation.py             Live manipulation test
   chart.py                    Draws the results chart
   results/                    Raw data from each run
 test/

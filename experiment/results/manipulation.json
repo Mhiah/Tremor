@@ -1,0 +1,49 @@
+{
+  "note": "Live run on 23 Nov 2026. Recorded from chain logs: the script's housekeeping step failed after the test itself completed, so this file was written from the transactions below.",
+  "market": 2986.27,
+  "fake_price": 3135.58,
+  "steps": [
+    {
+      "step": "Base pool refreshed at the market price (tiny trade)",
+      "chain": "Base Sepolia",
+      "tx": "0x2255b2dd385a8692e814e495170135f60696e35e37237d1ec2cfb24d054aabd3"
+    },
+    {
+      "step": "Lasna publishes it: one fresh source, 50% confidence",
+      "chain": "Reactive Lasna",
+      "tx": "0x406d142befa6c75c0684bd84e7b01342eb5dfe3d41177cfcf7f492563dd45d2b"
+    },
+    {
+      "step": "Reference lands: 2,986.27 at 50%",
+      "chain": "Unichain Sepolia",
+      "tx": "0x6a96049cbf685f074773515f04ab39facc724aecaa5a8d6cc4d9db242f18cdf8"
+    },
+    {
+      "step": "Feed pushed 5% above the market (the manipulation)",
+      "chain": "Base Sepolia",
+      "tx": "0x402de3288cc33fe63f89fbe0ec9cad9679641b321a3e00408921bb26066e6e22"
+    },
+    {
+      "step": "Lasna sees the sources 5% apart: 0% confidence",
+      "chain": "Reactive Lasna",
+      "tx": "0x5c80bfbddafe7bc74dfc316a6c0f34dcb301c8d63328f48909017365b14ca0d9"
+    },
+    {
+      "step": "Reference lands: 3,060.92 at 0%",
+      "chain": "Unichain Sepolia",
+      "tx": "0x43778af609bac92f3dc0eb8278ad9654786ad04422174738d1ea92989883fa47"
+    },
+    {
+      "step": "Trade toward the fake price in the Tremor pool: pays the normal 0.30% (reason: low confidence)",
+      "chain": "Unichain Sepolia",
+      "tx": "0xce49b20d942a749a102deb545b3381584f65b71a3b44d45fbfc34564750a0082"
+    }
+  ],
+  "trade": {
+    "gapPips": 25102,
+    "confidenceBps": 0,
+    "feeBps": 30.0,
+    "reason": "LOW_CONFIDENCE"
+  },
+  "fee_if_fake_price_trusted_bps": 177.7
+}
