@@ -36,10 +36,9 @@ def main():
     t.base.wait(h)
     out["base_pool_refresh_tx"] = R.norm(h)
 
-    # Wait for that observation to land so the two events are processed in order.
-    deadline = time.time() + 40
-    while time.time() < deadline and t.latest_ref()["sequence"] <= before:
-        time.sleep(0.5)
+    # Lasna may skip publishing a 1 bp move (it filters noise), so don't wait for a callback:
+    # give Lasna a few seconds to record the fresh pool observation.
+    time.sleep(6)
     mid_seq = t.latest_ref()["sequence"]
 
     # 2. Push the feed 5% above the market.

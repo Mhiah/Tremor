@@ -113,12 +113,11 @@ class Chain:
     def send(self, fn, gas=None):
         with self.lock:
             tx = fn.build_transaction({"from": self.acct.address, "nonce": self.nonce, "chainId": self.w3.eth.chain_id,
-                                       **({"gas": gas} if gas else {})})
+                                       "gas": gas or 800_000})
             if not gas:
-                try:
-                    tx["gas"] = int(self.w3.eth.estimate_gas(tx) * 1.3)
-                except Exception:
-                    tx["gas"] = 800_000  # lagging RPC node; swaps here use well under this
+                est = dict(tx)
+                est.pop("gas", None)
+                tx["gas"] = int(self.w3.eth.estimate_gas(est) * 1.3)
             signed_tx = self.acct.sign_transaction(tx)
             h = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
             self.nonce += 1
@@ -194,7 +193,17 @@ class Tremor:
                    "refSeq": seq, "poolPriceBefore": float(p)}
 
     def arb_key(self, name, key, market):
-        """Rational arbitrage of one pool toward `market`: reads the fee first, stops where profit ends."""
+        """Rational arbitrage of one pool toward `market`: reads the fee first, stops where profit ends.
+        Retries when a lagging RPC node gives an old price and the swap is refused before sending."""
+        for attempt in range(3):
+            try:
+                return self._arb_key_once(name, key, market)
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(1.5)
+
+    def _arb_key_once(self, name, key, market):
         p = self.pool_price(name)
         zero_for_one = market < p
         fee, reason, gap, conf, adverse, seq = self.hook.functions.quoteFee(key, zero_for_one).call()
@@ -401,13 +410,25 @@ def run(args):
 def _reset_all(t, pairs, price):
     """Bring every pool exactly to `price`. Housekeeping only; never counted in results."""
     hashes = []
+    seen = set()
     for pair in pairs:
         for mode in ("static", "tremor"):
             name, key = pair[mode]
-            p = t.pool_price(name)
-            if abs(p - price) / price > Decimal("0.00005"):
-                h, _ = t.swap_to(t.uni, t.uni_router, key, p, price)
-                hashes.append(h)
+            if name in seen:
+                continue
+            seen.add(name)
+            for _ in range(3):
+                p = t.pool_price(name)
+                if abs(p - price) / price <= Decimal("0.00005"):
+                    break
+                try:
+                    h, _ = t.swap_to(t.uni, t.uni_router, key, p, price)
+                    hashes.append(h)
+                    break
+                except Exception:
+                    # A lagging public RPC node can report an old price; the swap is then refused
+                    # before it is sent. Read again and retry.
+                    time.sleep(2)
     for h in hashes:
         t.uni.wait(h)
 

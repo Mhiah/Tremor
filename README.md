@@ -129,6 +129,25 @@ Tremor was tested live on testnet against an identical pool without it. Every ma
 
 The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves). Every row links to its transactions.
 
+### What each part adds: four modes, live
+
+The same hook can run a pool in four modes. Four Unichain pools, identical except for the mode, faced the same 3 market moves (-1.8%, +2.9%, -2.8%) and then a manipulated feed (pushed 5% above the market while the Base pool stayed put):
+
+| Mode | LP loss to arbitrage, 3 moves | Fee on arbitrage | Fee on an ordinary trade | Manipulated feed: fee toward the fake price | Manipulated feed: fee the other way |
+| --- | --- | --- | --- | --- | --- |
+| A: Static (control) | 20,716 tUSD | 30 bps | 30 bps | 30 bps | 30 bps |
+| B: Gap fee, no direction | 2,186 tUSD (89% less) | 178 bps | 178 bps | 178 bps | 178 bps |
+| C: Direction-aware, trusts any price | 2,186 tUSD (89% less) | 178 bps | 30 bps | 178 bps | 30 bps |
+| D: Full Tremor | 4,124 tUSD (80% less) | 164 bps | 30 bps | 30 bps | 30 bps |
+
+Fees in the move columns are averages over the 3 moves, quoted after Tremor's update landed.
+
+- **B (gap fee)** protects LPs well but charges every trader the surcharge, including ordinary traders who aren't taking anything from LPs. Under manipulation it charges everyone 1.78% on a price that isn't real.
+- **C (direction only)** spares ordinary traders but trusts whatever price arrives. Under manipulation, trades toward the fake price pay 1.78%.
+- **D (full Tremor)** spares ordinary traders and refuses to charge on a price its sources disagree about. It keeps a little less than C because confidence fades as the update ages, which is the price of that safety.
+
+Full record: `experiment/results/modes.json`.
+
 ### Live fast-bot test: the window Tremor can't close
 
 This bot prepares and signs its Unichain trades before the market moves, then sends them at the same instant as the Base trade, as an arbitrageur watching another venue would. Over 3 market moves:
@@ -166,6 +185,7 @@ python3 experiment/run.py --delays 0,0.5,1,1.5,2,3,5 --moves 5
 python3 experiment/chart.py
 python3 experiment/manipulation.py   # the live manipulation test
 python3 experiment/fastbot.py        # the live fast-bot test
+python3 experiment/modes.py          # the four-mode comparison
 ```
 
 ## Repository layout
@@ -183,6 +203,7 @@ experiment/
   run.py                      Live experiment runner
   manipulation.py             Live manipulation test
   fastbot.py                  Live fast-bot test (pre-signed trades)
+  modes.py                    Live four-mode comparison
   chart.py                    Draws the results chart
   results/                    Raw data from each run
 test/

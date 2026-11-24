@@ -1,0 +1,224 @@
+{
+  "modes": {
+    "A": "static",
+    "B": "gap",
+    "C": "directional",
+    "D": "full"
+  },
+  "moves": [
+    {
+      "move": 1,
+      "move_pct": -1.8362782122709895,
+      "from": 2924.2241,
+      "to": 2870.5272,
+      "reference_confidence_bps": 10000,
+      "base_swap_tx": "0x3719ce3149b237e07515bd70d0a789b7893a07b4283ee91a604adf46dfc4e6a5",
+      "quotes": {
+        "A": {
+          "arbitrage_fee_bps": 30.0,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 1,
+          "ordinary_reason": 1
+        },
+        "B": {
+          "arbitrage_fee_bps": 130.53,
+          "ordinary_fee_bps": 130.53,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 0
+        },
+        "C": {
+          "arbitrage_fee_bps": 130.53,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        },
+        "D": {
+          "arbitrage_fee_bps": 123.82,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        }
+      },
+      "arbitrage": {
+        "C": {
+          "lp_loss_tusd": 392.3577636980598,
+          "fee_paid_bps": 130.53,
+          "tx": "0x628800e6076457dd0edb1465c3202621e587afcfd9f9982b5779fa89a1505fdf"
+        },
+        "D": {
+          "lp_loss_tusd": 667.7478829039786,
+          "fee_paid_bps": 113.77,
+          "tx": "0x4597a04b0fc9ebe34530f3bfd5b03ec997202e3802b9685f3fc80af15de7fc2d"
+        },
+        "A": {
+          "lp_loss_tusd": 3234.8971701225782,
+          "fee_paid_bps": 30.0,
+          "tx": "0x4920d61697f27fa3751d76c741103b0ce09b64f6b636cfdd79cb988ab3a889f6"
+        },
+        "B": {
+          "lp_loss_tusd": 392.3577636980598,
+          "fee_paid_bps": 130.53,
+          "tx": "0x9c82aba1db5853c6962d0aefab4453eed983b7c97c667a277353a130f00dcd2d"
+        }
+      }
+    },
+    {
+      "move": 2,
+      "move_pct": 2.918615413377195,
+      "from": 2870.5272,
+      "to": 2954.3068,
+      "reference_confidence_bps": 10000,
+      "base_swap_tx": "0xec9fe9d2f653c48144d289aa1013c129f3cc37a3c358761648403bc49e47a26f",
+      "quotes": {
+        "A": {
+          "arbitrage_fee_bps": 30.0,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 1,
+          "ordinary_reason": 1
+        },
+        "B": {
+          "arbitrage_fee_bps": 206.3,
+          "ordinary_fee_bps": 206.3,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 0
+        },
+        "C": {
+          "arbitrage_fee_bps": 206.3,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        },
+        "D": {
+          "arbitrage_fee_bps": 188.67,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        }
+      },
+      "arbitrage": {
+        "B": {
+          "lp_loss_tusd": 859.350758926058,
+          "fee_paid_bps": 206.3,
+          "tx": "0xc9b83683b01de6892d88f26de56cee6d1ae04b475a72f5f386fd3acdd4189cde"
+        },
+        "D": {
+          "lp_loss_tusd": 1715.5037507105637,
+          "fee_paid_bps": 173.96,
+          "tx": "0x1ef8ae5086819ef94c972c494f32164562b032ad5ca267d097d727b205ce479b"
+        },
+        "A": {
+          "lp_loss_tusd": 9033.307186055557,
+          "fee_paid_bps": 30.0,
+          "tx": "0x02c840fd54e3d7618f6e83bc255cffc5807fd6f8cb1342b59f003925cfbca23d"
+        },
+        "C": {
+          "lp_loss_tusd": 859.350758926058,
+          "fee_paid_bps": 206.3,
+          "tx": "0x43727afde65a7e6e81a3432172d155ff8b031795a87d24e0f8a0398b25149e28"
+        }
+      }
+    },
+    {
+      "move": 3,
+      "move_pct": -2.770375419034641,
+      "from": 2954.3068,
+      "to": 2872.4614,
+      "reference_confidence_bps": 10000,
+      "base_swap_tx": "0xbf8ff5cccceae7338df8b809e3a405a2b8f09d08797a9aa92c83c561b51a1581",
+      "quotes": {
+        "A": {
+          "arbitrage_fee_bps": 30.0,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 1,
+          "ordinary_reason": 1
+        },
+        "B": {
+          "arbitrage_fee_bps": 195.92,
+          "ordinary_fee_bps": 195.92,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 0
+        },
+        "C": {
+          "arbitrage_fee_bps": 195.92,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        },
+        "D": {
+          "arbitrage_fee_bps": 179.32,
+          "ordinary_fee_bps": 30.0,
+          "arbitrage_reason": 0,
+          "ordinary_reason": 5
+        }
+      },
+      "arbitrage": {
+        "B": {
+          "lp_loss_tusd": 934.0848043315609,
+          "fee_paid_bps": 195.92,
+          "tx": "0xf0f6cb8b7fe55210fff83eeac5f3e93976d75db6a28b83a261054eb6c2d6c309"
+        },
+        "C": {
+          "lp_loss_tusd": 934.0848043315609,
+          "fee_paid_bps": 195.92,
+          "tx": "0xab0f2489818e9b871eceb6131e2ce1a558726c15e6a56c9fd4f733903480094b"
+        },
+        "D": {
+          "lp_loss_tusd": 1741.0435811860002,
+          "fee_paid_bps": 165.49,
+          "tx": "0x29a641d640a420b6c2ae58505d8ec2e6afe8e90fb9099a59759ed9bb5dac910c"
+        },
+        "A": {
+          "lp_loss_tusd": 8447.62678078957,
+          "fee_paid_bps": 30.0,
+          "tx": "0xb1f2f22b1fa19da759e06c1fc57311c78c9ec590bb5c51971a19ce50fb9eaf50"
+        }
+      }
+    }
+  ],
+  "manipulation": {
+    "market": 2873.6105,
+    "fake_feed_price": 3017.291,
+    "reference_price": 2945.45075,
+    "reference_confidence_bps": 0,
+    "base_feed_spike_tx": "0x1fed58b0b6eb4e191cf085d651e60be64abb1b3ad386eff4675b11a0c975edf6",
+    "reference_age_when_quoted_s": 15,
+    "quotes": {
+      "A": {
+        "arbitrage_fee_bps": 30.0,
+        "ordinary_fee_bps": 30.0,
+        "arbitrage_reason": 1,
+        "ordinary_reason": 1
+      },
+      "B": {
+        "arbitrage_fee_bps": 177.71,
+        "ordinary_fee_bps": 177.71,
+        "arbitrage_reason": 0,
+        "ordinary_reason": 0
+      },
+      "C": {
+        "arbitrage_fee_bps": 177.71,
+        "ordinary_fee_bps": 30.0,
+        "arbitrage_reason": 0,
+        "ordinary_reason": 5
+      },
+      "D": {
+        "arbitrage_fee_bps": 30.0,
+        "ordinary_fee_bps": 30.0,
+        "arbitrage_reason": 4,
+        "ordinary_reason": 4
+      }
+    },
+    "fee_toward_fake_price_bps": {
+      "A": 30.0,
+      "B": 177.71,
+      "C": 177.71,
+      "D": 30.0
+    },
+    "fee_other_direction_bps": {
+      "A": 30.0,
+      "B": 177.71,
+      "C": 30.0,
+      "D": 30.0
+    }
+  }
+}
