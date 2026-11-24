@@ -240,7 +240,7 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     <h2 id="limits-h">What this test does not show</h2>
     <ul class="limits">
       <li>The market, the price feed and the arbitrage bots are our own scripts on testnet.</li>
-      <li>An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. Our bots never did, because they needed 6 to 12 seconds to land a trade; professional ones are faster.</li>
+      <li>An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. A test bot that pre-signed its trades did exactly that on all 3 tries, landing in the same second as the market move; the experiment's slower bots never did.</li>
       <li>11 market moves is a small sample, limited by testnet funds. The runner is in the repository so anyone can run more.</li>
     </ul>
   </section>

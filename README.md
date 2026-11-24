@@ -119,15 +119,27 @@ Tremor was tested live on testnet against an identical pool without it. Every ma
 
 - **Rational arbitrage after the update lands.** The bot reads the fee before trading and stops where trading stops paying. Tremor's surcharge takes most of the gap, so LPs keep most of what they would have lost. The pool still gets corrected, because the bot still trades.
 - **Bots that raced the update.** Some bots read the old fee, then their trade landed after Tremor's update. They paid the surcharge on a trade sized for the normal fee, and lost money. That is why the all-trades figure is above the rational-bot figure.
-- **Speed.** Reactive's loop landed every update in 2 to 3 seconds. In our runs, every bot trade landed after it, including bots that fired the instant the market moved, because our bots run over public RPC endpoints and needed 6 to 12 seconds to land a trade.
+- **Speed.** Reactive's loop landed every update in 2 to 3 seconds. The experiment's bots quoted, estimated and sent over public RPC endpoints, so they needed 6 to 12 seconds to land a trade and always arrived after the update. A faster bot does beat it: see the fast-bot test below.
 
 **Honest limits**
 
 - The market, the price feed and the arbitrage bots are our own scripts on testnet. Real markets move without warning and real arbitrageurs are faster.
-- A professional arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. Tremor does not stop that; the hook's tests show that case, and the faster Reactive's loop, the smaller that window.
+- An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. Tremor does not stop that, and the fast-bot test below shows it happening live. The faster Reactive's loop, the smaller that window.
 - 11 market moves is a small sample, limited by testnet funds. The runner is in the repo, so anyone can run more.
 
 The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves). Every row links to its transactions.
+
+### Live fast-bot test: the window Tremor can't close
+
+This bot prepares and signs its Unichain trades before the market moves, then sends them at the same instant as the Base trade, as an arbitrageur watching another venue would. Over 3 market moves:
+
+| Market move | Tremor's update landed | Bot's trade landed | Tremor fee paid | Bot's Tremor-pool trade |
+| --- | --- | --- | --- | --- |
+| +2.07% | 2 s | same second as the Base trade | 30 bps | `0x9547a666d2904138bffc6db5756b64c6ef8a884677cf9b1d8103d57d0f76f992` |
+| -1.75% | 2 s | same second as the Base trade | 30 bps | `0xcbad4f25b0969847799a3c7d914040b04c47d8d61e0cac1ffeff2b6008762c3d` |
+| -2.37% | 2 s | same second as the Base trade | 30 bps | `0x22744b7f61ed342c1f9dcc47cedd5f349addaaa36cecfce925c9a0adc13369c6` |
+
+Every time, the bot's trade landed before Tremor's update and paid the normal 0.30%, so the Tremor pool lost exactly as much as the static pool. That is the honest edge of the design: Tremor charges arbitrage that arrives after the update, and the 2-second loop is the window it leaves open. Full record: `experiment/results/fastbot.json`.
 
 ### Live manipulation test
 
@@ -153,6 +165,7 @@ set -a; source .env; set +a   # PRIVATE_KEY plus the addresses printed by the de
 python3 experiment/run.py --delays 0,0.5,1,1.5,2,3,5 --moves 5
 python3 experiment/chart.py
 python3 experiment/manipulation.py   # the live manipulation test
+python3 experiment/fastbot.py        # the live fast-bot test
 ```
 
 ## Repository layout
@@ -169,6 +182,7 @@ script/                       Deploy scripts for all three chains, plus the extr
 experiment/
   run.py                      Live experiment runner
   manipulation.py             Live manipulation test
+  fastbot.py                  Live fast-bot test (pre-signed trades)
   chart.py                    Draws the results chart
   results/                    Raw data from each run
 test/
