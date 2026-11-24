@@ -43,6 +43,25 @@ Tremor has three parts, one on each chain:
 
 Lasna decides whether a price can be trusted. The hook works out the gap at the exact moment of each trade, so it is never out of date.
 
+## Tremor as a Reactive loop
+
+Reactive describes what a reactive contract adds to ordinary smart contracts as a loop: **observe, remember, evaluate, react, repeat**. `TremorReactive` on Lasna runs that loop for a Uniswap v4 pool on another chain.
+
+| Step | What Tremor does | Where |
+| --- | --- | --- |
+| **Observe** | Subscribes to two independent price sources on Base Sepolia: a v4 pool's `Swap` events and a feed's `PriceReported` events. Nothing polls; the events come to the contract. | Reactive Lasna |
+| **Remember** | Keeps reaction state on-chain between events: each source's last price, when it was seen and its last log position, plus the last reference it published and an update counter. | Reactive Lasna |
+| **Evaluate** | Checks that each event is in order and in range, whether both sources are fresh, how closely they agree (its confidence score), and whether the reference has moved enough to be worth a callback. | Reactive Lasna |
+| **React** | Sends a numbered, authenticated callback to the Unichain ReferenceStore. The hook then prices every swap from that reference, on the destination chain. | Reactive Lasna → Unichain Sepolia |
+| **Repeat** | Runs on every new event, for as long as the contract holds REACT, with nobody watching. | All three chains |
+
+**Why this matters for Tremor**
+
+- **No keeper or bot in the middle.** Without Reactive, carrying Base's price to a Unichain pool needs an off-chain watcher someone has to run and trust. Here the whole path is contracts reacting to contracts.
+- **Rules enforced by code.** The surcharge is capped, falls to zero when the sources disagree, and expires when the reference ages. The live manipulation test shows these rules holding under attack.
+- **A record anyone can check.** Every step leaves a transaction on its chain: the Base event, the Lasna reaction and the Unichain callback. The source code is verified, so anyone can read why the contract acted, not just that it did.
+- **Uniswap hooks and Reactive callbacks together.** The hook decides each trade's fee on Unichain; the reactive contract decides what that hook should believe about the market on Base.
+
 ## The fee rule
 
 Every swap pays the pool's normal fee, except trades that **move the pool toward the reference price**. Those trades are the ones taking value from LPs, so they pay a surcharge:
