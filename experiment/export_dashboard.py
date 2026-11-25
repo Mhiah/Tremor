@@ -40,7 +40,21 @@ def main():
     t_saw = sum(m["tremorLoss"] or 0 for m in moves)
     s_all = sum(float(r["static_lp_loss_tusd"]) for r in rows)
     t_all = sum(float(r["tremor_lp_loss_tusd"]) for r in rows)
+    modes = None
+    mpath = os.path.join(HERE, "results", "modes.json")
+    if os.path.exists(mpath):
+        md = json.load(open(mpath))
+        loss = {m: sum(r["arbitrage"][m]["lp_loss_tusd"] for r in md["moves"]) for m in "ABCD"}
+        man = (md.get("manipulation") or {}).get("quotes", {})
+        labels = {"A": "Static pool", "B": "Gap fee, no direction", "C": "Direction only", "D": "Full Tremor"}
+        modes = [{
+            "mode": m, "label": labels[m],
+            "lossCutPct": round(100 * (1 - loss[m] / loss["A"])) if loss["A"] else 0,
+            "ordinaryFeeBps": round(sum(r["quotes"][m]["ordinary_fee_bps"] for r in md["moves"]) / len(md["moves"])),
+            "fakePriceFeeBps": round(man.get(m, {}).get("arbitrage_fee_bps", 0)),
+        } for m in "ABCD"]
     data = {
+        "modes": modes,
         "moves": moves,
         "totals": {
             "moves": len(moves), "trades": len(rows),

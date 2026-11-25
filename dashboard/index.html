@@ -5,286 +5,427 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tremor: cross-chain LP protection on Reactive Omni</title>
 <meta name="description" content="A price move on Base reaches a Uniswap v4 pool on Unichain in about 3 seconds through Reactive Omni, and arbitrage pays the LPs for the gap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700&family=Work+Sans:wght@400;700&family=DM+Mono&display=swap">
 <style>
-@font-face { font-family: "Plex Cond"; src: url(fonts/ibm-plex-sans-condensed-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "Plex Cond"; src: url(fonts/ibm-plex-sans-condensed-latin-600-normal.woff2) format("woff2"); font-weight: 600; font-display: swap; }
-@font-face { font-family: "Plex"; src: url(fonts/ibm-plex-sans-latin-400-normal.woff2) format("woff2"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Plex"; src: url(fonts/ibm-plex-sans-latin-500-normal.woff2) format("woff2"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "Plex"; src: url(fonts/ibm-plex-sans-latin-600-normal.woff2) format("woff2"); font-weight: 600; font-display: swap; }
-
+/* ===== Design tokens: the only place colours, fonts and radii are defined ===== */
 :root {
-  --paper: #eef2ef;        /* mineral survey paper */
-  --sheet: #f8faf8;        /* raised panels */
-  --ink: #18232a;          /* basalt */
-  --ink-2: #4e5b63;
-  --ink-3: #6d7a81;
-  --rule: #cfd8d3;
-  --trace: #18232a;        /* seismograph pen */
-  --static: #2a78d6;       /* data: static pool */
-  --tremor: #eb6834;       /* data: Tremor pool */
-  --focus: #2a78d6;
-  --cond: "Plex Cond", "Arial Narrow", system-ui, sans-serif;
-  --body: "Plex", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-bg: #111315;
+  --color-surface: #222425;
+  --color-text: #EDEDED;
+  --color-muted: #9E9F9F;
+  --color-primary: #FFFFFF;
+  --color-on-primary: #111111;
+  --color-secondary: #9AA0A6;
+  --color-on-secondary: #111111;
+  --color-accent: #FF5C39;
+  --color-on-accent: #111111;
+  --color-border: #323435;
+  --color-gain: #4ADE80;
+  --color-loss: #F87171;
+
+  --font-heading: "Fraunces", serif;
+  --font-body: "Work Sans", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --font-size-base: 16px;
+  --heading-weight: 700;
+  --heading-letter-spacing: 0;
+
+  --radius-card: 18px;
+  --radius-button: 999px;
+  --shadow-card: 0 2px 4px rgba(0,0,0,.10), 0 14px 34px rgba(0,0,0,.16);
+  --space-card: 18px;
+  --space-gap: 16px;
+
+  /* Type scale from the 16px base */
+  --fs-display: 54px;
+  --fs-title: 34px;
+  --fs-section: 24px;
+  --fs-card: 20px;
+  --fs-small: 13px;
+
+  /* 4px spacing scale */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px; --s10: 40px; --s12: 48px; --s16: 64px;
+
+  /* Transparent mixes of the tokens */
+  --tint-primary: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  --tint-accent: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  --card-fill: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 3%, var(--color-surface)), var(--color-surface));
 }
+
+/* ===== Base ===== */
 * { box-sizing: border-box; }
-html { background: var(--paper); color: var(--ink); }
-body { margin: 0; font: 400 17px/1.55 var(--body); font-variant-numeric: tabular-nums; }
-a { color: inherit; text-decoration-color: var(--ink-3); text-underline-offset: 3px; }
-a:hover { text-decoration-color: var(--ink); }
-:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
-.wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+html { background: var(--color-bg); color: var(--color-text); }
+body {
+  margin: 0; font: 400 var(--font-size-base)/1.5 var(--font-body);
+  background:
+    radial-gradient(900px 600px at 85% -10%, color-mix(in srgb, var(--color-accent) 10%, transparent), transparent 70%),
+    radial-gradient(800px 600px at 20% 30%, color-mix(in srgb, var(--color-primary) 5%, transparent), transparent 70%),
+    var(--color-bg);
+  background-attachment: fixed;
+}
+h1, h2, h3 { font-family: var(--font-heading); font-weight: var(--heading-weight); letter-spacing: var(--heading-letter-spacing); line-height: 1.1; text-wrap: balance; margin: 0; }
+p { max-width: 65ch; }
+a { color: var(--color-primary); text-decoration-color: var(--color-muted); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--color-primary); }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: 4px; }
+code, .mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--color-muted); }
+.small { font-size: var(--fs-small); }
 
-/* Top bar */
-.top { display: flex; justify-content: space-between; align-items: baseline; padding: 22px 0; }
-.mark { font: 600 22px/1 var(--cond); letter-spacing: -0.01em; text-decoration: none; }
-.top nav a { margin-left: 22px; font-size: 15px; color: var(--ink-2); }
+/* ===== App shell ===== */
+.shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: 100vh; }
+.side {
+  position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: var(--s6);
+  background: var(--color-primary); color: var(--color-on-primary); padding: var(--s6) var(--s4);
+}
+.brand { font: var(--heading-weight) 26px/1.1 var(--font-heading); color: var(--color-on-primary); text-decoration: none; padding: 0 var(--s3); }
+.side nav { display: flex; flex-direction: column; gap: var(--s1); }
+.side nav a {
+  display: flex; align-items: center; min-height: 44px; padding: 0 var(--s3); border-radius: var(--radius-button);
+  color: var(--color-on-primary); text-decoration: none; font-weight: 600;
+}
+.side nav a:hover { background: color-mix(in srgb, var(--color-on-primary) 8%, transparent); }
+.side nav a[aria-current="true"] { background: var(--color-on-primary); color: var(--color-primary); }
+.side :focus-visible { outline-color: var(--color-on-primary); }
+.wallet {
+  margin-top: auto; border-radius: var(--radius-card); padding: var(--space-card);
+  background: var(--color-on-primary); color: var(--color-primary);
+}
+.wallet .label { font-size: var(--fs-small); color: var(--color-muted); margin: 0 0 var(--s1); }
+.wallet .num { font-size: var(--fs-card); }
+.wallet p { margin: var(--s2) 0 0; font-size: var(--fs-small); color: var(--color-muted); }
+.dot-live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--color-gain); margin-right: var(--s2); vertical-align: 1px; }
 
-/* Hero: the seismograph */
-.hero { padding: 28px 0 8px; }
-.hero h1 { font: 600 clamp(36px, 5.4vw, 64px)/1.02 var(--cond); letter-spacing: -0.02em; margin: 0; max-width: 15ch; }
-.hero p.lede { font-size: 19px; color: var(--ink-2); max-width: 58ch; margin: 22px 0 0; }
-.seismo { margin: 40px 0 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 26px 26px 18px; }
+main { padding: var(--s6) var(--s10) var(--s12); min-width: 0; }
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s4); margin-bottom: var(--s8); }
+.page-head .muted { margin: 0 0 var(--s1); font-size: var(--fs-small); }
+.page-head h1 { font-size: var(--fs-title); }
+
+/* ===== Buttons ===== */
+.btn, .btn-outline {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 var(--s5);
+  border-radius: var(--radius-button); font: 600 var(--font-size-base)/1 var(--font-body); cursor: pointer; text-decoration: none;
+}
+.btn { background: var(--color-primary); color: var(--color-on-primary); border: 0; }
+.btn:hover { background: color-mix(in srgb, var(--color-primary) 92%, var(--color-on-primary)); }
+.btn:disabled { background: color-mix(in srgb, var(--color-primary) 18%, transparent); color: var(--color-muted); cursor: not-allowed; }
+.btn-outline { background: transparent; color: var(--color-text); border: 1.5px solid var(--color-border); }
+.btn-outline:hover { border-color: var(--color-muted); }
+
+/* ===== Cards ===== */
+.card { background: var(--card-fill); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: var(--space-card); box-shadow: var(--shadow-card); }
+.card h3 { font-size: var(--fs-card); margin-bottom: var(--s3); }
+.badge { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--s3); border-radius: var(--radius-button); background: var(--tint-accent); color: var(--color-text); font-size: var(--fs-small); font-weight: 600; }
+
+/* ===== Hero ===== */
+.hero h2.display { font-size: var(--fs-display); max-width: 18ch; }
+.hero .lede { font-size: 18px; color: var(--color-muted); margin: var(--s5) 0 0; }
+.seismo { margin: var(--s8) 0 0; padding: var(--s6) var(--s6) var(--s4); }
 .seismo svg { width: 100%; height: auto; display: block; overflow: visible; }
-.seismo .lane-label { font: 500 15px var(--cond); fill: var(--ink); }
-.seismo .lane-sub { font: 400 12.5px var(--body); fill: var(--ink-3); }
-.seismo .tick { font: 400 12px var(--body); fill: var(--ink-3); }
-.seismo .grid { stroke: var(--rule); stroke-width: 1; }
-.seismo .pen { fill: none; stroke: var(--trace); stroke-width: 1.6; stroke-linejoin: round; }
-.seismo .pen.arrive { stroke: var(--tremor); stroke-width: 2; }
-.seismo .stamp { font: 600 13px var(--cond); fill: var(--ink); }
-.seismo figcaption { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 14px; font-size: 13.5px; color: var(--ink-2); }
+.seismo .lane-label { font: 700 16px var(--font-heading); fill: var(--color-text); }
+.seismo .lane-sub { font: 400 12.5px var(--font-body); fill: var(--color-muted); }
+.seismo .tick { font: 400 12px var(--font-mono); fill: var(--color-muted); }
+.seismo .grid { stroke: var(--color-border); stroke-width: 1; }
+.seismo .pen { fill: none; stroke: var(--color-primary); stroke-width: 1.6; stroke-linejoin: round; }
+.seismo .pen.arrive { stroke: var(--color-accent); stroke-width: 2; }
+.seismo .stamp { font: 400 13px var(--font-mono); fill: var(--color-text); }
+.seismo figcaption { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s6); margin-top: var(--s4); font-size: 14px; color: var(--color-muted); }
 @media (prefers-reduced-motion: no-preference) {
   .pen { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: draw 1.6s cubic-bezier(.4,0,.2,1) forwards; animation-delay: var(--delay, 0s); }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 }
 
-/* Sections */
-section { padding: 72px 0 0; }
-h2 { font: 600 34px/1.1 var(--cond); letter-spacing: -0.015em; margin: 0 0 10px; max-width: 26ch; }
-.intro { color: var(--ink-2); max-width: 62ch; margin: 0 0 28px; }
+/* ===== Stat cards ===== */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-gap); margin: var(--s8) 0 0; }
+.stat .k { margin: 0 0 var(--s2); font-size: 14px; color: var(--color-muted); }
+.stat .v { font: 400 34px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.stat .chg { margin: var(--s2) 0 0; font-size: var(--fs-small); color: var(--color-muted); }
+.stat .chg.good { color: var(--color-gain); }
+.stat.lead { background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); color: var(--color-on-primary); border-color: transparent; }
+.stat.lead .k, .stat.lead .chg { color: var(--color-on-primary); }
 
-/* Live readout */
-.live { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0; background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; }
-.live > div { padding: 22px 24px; border-left: 1px solid var(--rule); }
-.live > div:first-child { border-left: 0; }
-.live .k { font-size: 14px; color: var(--ink-2); margin: 0 0 6px; }
-.live .v { font: 600 40px/1 var(--cond); letter-spacing: -0.01em; }
-.live .v small { font: 500 17px var(--cond); color: var(--ink-2); margin-left: 4px; letter-spacing: 0; }
-.live .note { font-size: 13.5px; color: var(--ink-3); margin-top: 8px; }
-.fees { width: 100%; border-collapse: collapse; font-size: 15px; }
-.fees th { text-align: left; font-weight: 500; color: var(--ink-2); padding: 0 0 8px; }
-.fees td { padding: 7px 0; border-top: 1px solid var(--rule); }
-.fees td.n { text-align: right; font: 600 18px var(--cond); }
-.fees td.n.up { color: var(--tremor); }
-.status { font-size: 13.5px; color: var(--ink-3); margin-top: 12px; }
+/* ===== Sections ===== */
+section { padding: var(--s16) 0 0; scroll-margin-top: var(--s6); }
+h2 { font-size: var(--fs-title); margin-bottom: var(--s3); }
+h3.sub { font-size: var(--fs-section); margin: var(--s10) 0 var(--s3); }
+.intro { color: var(--color-muted); margin: 0 0 var(--s6); }
 
 /* Mover */
-.mover { display: grid; grid-template-columns: minmax(260px, 1fr) 1.4fr; gap: 28px; margin: 0 0 36px; align-items: start; }
-.mover-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.btn { font: 600 16px var(--cond); color: #fff; background: var(--ink); border: 0; border-radius: 4px; padding: 12px 18px; cursor: pointer; }
-.btn:hover { background: #2b3a43; }
-.btn:disabled { background: var(--rule); color: var(--ink-3); cursor: not-allowed; }
-.mover-note { flex-basis: 100%; margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
-.track { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--rule); }
-.track li { display: flex; gap: 12px; align-items: flex-start; padding: 0 0 16px 0; margin-left: -7px; font-size: 15px; }
+.mover { display: grid; grid-template-columns: minmax(260px, 1fr) 1.4fr; gap: var(--space-gap); align-items: stretch; }
+.mover-actions { display: flex; flex-wrap: wrap; gap: var(--s3); align-content: flex-start; }
+.mover-note { flex-basis: 100%; margin: var(--s1) 0 0; font-size: 14px; color: var(--color-muted); }
+.track { list-style: none; margin: 0; padding: 0; }
+.track li { display: flex; gap: var(--s3); align-items: flex-start; padding: 0 0 var(--s4); font-size: 15px; }
 .track li:last-child { padding-bottom: 0; }
-.track .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--rule); margin-top: 5px; }
-.track li.busy .dot { border-color: var(--ink); }
-.track li.done .dot { background: var(--tremor); border-color: var(--tremor); }
-.track li.fail .dot { background: var(--ink-3); border-color: var(--ink-3); }
-.track .t-msg { color: var(--ink-2); }
+.track .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--color-border); margin-top: 6px; }
+.track li.busy .dot { border-color: var(--color-primary); }
+.track li.done .dot { background: var(--color-accent); border-color: var(--color-accent); }
+.track li.fail .dot { background: var(--color-muted); border-color: var(--color-muted); }
+.track b { font-weight: 600; }
+.track .t-msg { color: var(--color-muted); }
+.track .t-msg b { color: var(--color-text); font-family: var(--font-mono); font-weight: 400; }
+.track-empty { color: var(--color-muted); margin: 0; font-size: 15px; }
 @media (prefers-reduced-motion: no-preference) { .track li.busy .dot { animation: pulse 1s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .35; } } }
-h3.sub { font: 600 22px/1.2 var(--cond); margin: 0 0 12px; }
-#loops td.when { color: var(--ink-2); white-space: nowrap; }
+
+/* Live readout */
+.live { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: var(--space-gap); }
+.live .k { font-size: 14px; color: var(--color-muted); margin: 0 0 var(--s2); }
+.live .v { font: 400 40px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.live .v small { font-size: 18px; color: var(--color-muted); margin-left: var(--s1); }
+.live .note { font-size: var(--fs-small); color: var(--color-muted); margin: var(--s2) 0 0; }
+.fees { width: 100%; border-collapse: collapse; font-size: 15px; }
+.fees th { text-align: left; font-weight: 400; color: var(--color-muted); padding: 0 0 var(--s2); font-size: var(--fs-small); }
+.fees th.r, .fees td.n { text-align: right; }
+.fees td { padding: var(--s2) 0; border-top: 1px solid var(--color-border); }
+.fees td.n { font: 400 17px var(--font-mono); }
+.fees td.n.up { color: var(--color-accent); }
+.status { font-size: var(--fs-small); color: var(--color-muted); margin: var(--s3) 0 0; }
 
 /* Results */
-.headline { display: grid; grid-template-columns: auto 1fr; gap: 0 28px; align-items: end; margin-bottom: 30px; }
-.headline .big { font: 600 clamp(72px, 11vw, 132px)/0.85 var(--cond); letter-spacing: -0.03em; }
-.headline p { margin: 0; max-width: 44ch; color: var(--ink-2); }
-.headline p strong { color: var(--ink); font-weight: 600; }
-.chart { background: var(--sheet); border: 1px solid var(--rule); border-radius: 6px; padding: 22px 22px 12px; position: relative; }
-.legend { display: flex; gap: 22px; font-size: 14px; color: var(--ink); margin: 0 0 10px; }
-.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+.headline { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--s3) var(--s6); margin-bottom: var(--s6); }
+.headline .big { font: 400 clamp(64px, 9vw, 112px)/0.9 var(--font-mono); letter-spacing: -0.02em; }
+.headline p { margin: 0; max-width: 44ch; color: var(--color-muted); }
+.headline p strong { color: var(--color-text); font-weight: 600; }
+.chart-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-gap); align-items: start; }
+.chart { position: relative; }
+.legend { display: flex; flex-wrap: wrap; gap: var(--s5); font-size: 14px; margin: 0 0 var(--s3); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: var(--s2); vertical-align: -1px; }
 .chart svg { width: 100%; height: auto; display: block; }
-.chart .axis { font: 400 12px var(--body); fill: var(--ink-3); }
-.chart .gridline { stroke: var(--rule); }
-.chart .bar { transition: opacity .12s; }
-.chart .hit { fill: transparent; cursor: default; }
-.chart .hit:hover + .bars .bar, .chart g.col:hover .bar { opacity: 1; }
-.tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; font-size: 13px; line-height: 1.45; padding: 9px 11px; border-radius: 4px; opacity: 0; transform: translateY(4px); transition: opacity .1s, transform .1s; white-space: nowrap; }
+.chart .axis { font: 400 12px var(--font-mono); fill: var(--color-muted); }
+.chart .axis-label { font: 400 12px var(--font-body); fill: var(--color-muted); }
+.chart .gridline { stroke: var(--color-border); }
+.chart .hit { fill: transparent; }
+.tip { position: absolute; pointer-events: none; background: var(--color-primary); color: var(--color-on-primary); font-size: var(--fs-small); line-height: 1.5; padding: var(--s2) var(--s3); border-radius: 12px; opacity: 0; transform: translateY(4px); transition: opacity .1s, transform .1s; white-space: nowrap; box-shadow: var(--shadow-card); }
 .tip.on { opacity: 1; transform: none; }
 .tip b { font-weight: 600; }
-.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 22px; border-top: 1px solid var(--rule); }
-.facts div { padding: 16px 20px 0 0; }
-.facts .v { font: 600 28px/1.1 var(--cond); }
-.facts .k { font-size: 14px; color: var(--ink-2); }
-details.table { margin-top: 18px; font-size: 14px; }
-details.table summary { cursor: pointer; color: var(--ink-2); }
-details.table table { margin-top: 10px; }
+.modes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s4); }
+.modes .row { display: flex; justify-content: space-between; gap: var(--s3); font-size: 15px; }
+.modes .row .num { color: var(--color-text); }
+.bar-track { height: 8px; border-radius: var(--radius-button); background: color-mix(in srgb, var(--color-primary) 8%, transparent); margin: var(--s2) 0 var(--s1); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: var(--radius-button); background: var(--color-secondary); }
+.modes li.best .bar-fill { background: var(--color-primary); }
+.modes .why { font-size: var(--fs-small); color: var(--color-muted); margin: 0; }
+.modes .why.bad { color: var(--color-loss); }
+.modes .why.good { color: var(--color-gain); }
+details.table { margin-top: var(--s4); font-size: 14px; }
+details.table summary { cursor: pointer; color: var(--color-muted); min-height: 44px; display: flex; align-items: center; }
 
 /* Steps */
-.steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; counter-reset: s; }
-.steps li { padding: 0 26px 0 0; counter-increment: s; }
-.steps li::before { content: counter(s); display: block; font: 600 15px var(--cond); color: var(--ink-3); border-top: 2px solid var(--ink); padding-top: 10px; margin-bottom: 10px; }
-.steps h3 { font: 600 21px/1.2 var(--cond); margin: 0 0 6px; }
-.steps p { margin: 0; color: var(--ink-2); font-size: 16px; }
-.steps .chain { font-size: 13.5px; color: var(--ink-3); margin-top: 8px; }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-gap); counter-reset: s; }
+.steps li { counter-increment: s; }
+.steps li::before { content: counter(s); display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--tint-accent); font: 400 15px var(--font-mono); margin-bottom: var(--s3); }
+.steps h3 { font-size: var(--fs-card); margin: 0 0 var(--s2); }
+.steps p { margin: 0; color: var(--color-muted); font-size: 15px; }
+.steps .chain { margin-top: var(--s3); }
 
-/* Proof tables */
-table.proof { width: 100%; border-collapse: collapse; font-size: 14.5px; }
-table.proof th { text-align: left; font-weight: 500; color: var(--ink-2); padding: 0 12px 8px 0; border-bottom: 1px solid var(--ink); }
-table.proof td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
-table.proof code { font: 400 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-2); }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table.proof { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.proof th { text-align: left; font-weight: 400; color: var(--color-muted); font-size: var(--fs-small); padding: 0 var(--s3) var(--s2) 0; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+table.proof td { padding: var(--s3) var(--s3) var(--s3) 0; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+table.proof tr:last-child td { border-bottom: 0; }
+table.proof code, table.proof td a { font-family: var(--font-mono); font-size: 13px; }
+table.proof th.r, table.proof td.r { text-align: right; }
+#loops td:nth-child(2), #loops td:nth-child(3), #loops td:nth-child(4), #loops th:nth-child(2), #loops th:nth-child(3), #loops th:nth-child(4),
+#moves-table td:nth-child(n+2):nth-child(-n+6), #moves-table th:nth-child(n+2):nth-child(-n+6) { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+#loops td.when { color: var(--color-muted); white-space: nowrap; }
 
-.limits { margin: 0; padding-left: 20px; color: var(--ink-2); max-width: 70ch; }
-.limits li { margin-bottom: 8px; }
-footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rule); font-size: 14px; color: var(--ink-2); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.limits { margin: 0; padding-left: var(--s5); color: var(--color-muted); max-width: 70ch; }
+.limits li { margin-bottom: var(--s2); }
+footer { margin: var(--s16) 0 0; padding: var(--s6) 0 0; border-top: 1px solid var(--color-border); font-size: 14px; color: var(--color-muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--s3); }
 
-@media (max-width: 820px) {
-  body { font-size: 16px; }
-  .wrap { padding: 0 18px; }
-  .top nav a { margin-left: 14px; }
-  .seismo { padding: 16px 12px 12px; }
-  .live { grid-template-columns: 1fr; }
-  .mover { grid-template-columns: 1fr; }
-  .live > div { border-left: 0; border-top: 1px solid var(--rule); }
-  .live > div:first-child { border-top: 0; }
-  .headline { grid-template-columns: 1fr; gap: 12px; }
-  .steps, .two, .facts { grid-template-columns: 1fr; gap: 26px; }
-  .proof-wrap { overflow-x: auto; }
-  section { padding-top: 56px; }
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live { grid-template-columns: 1fr 1fr; }
+  .live > .card:last-child { grid-column: 1 / -1; }
 }
+@media (max-width: 900px) {
+  .chart-row, .mover { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { position: sticky; top: 0; z-index: 5; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); padding: var(--s2) var(--s3); }
+  .brand { font-size: 20px; padding: 0 var(--s2); }
+  .side nav { flex-direction: row; flex-wrap: wrap; gap: 0; }
+  .side nav a { padding: 0 var(--s3); white-space: nowrap; font-size: 15px; }
+  .wallet { display: none; }
+  main { padding: var(--s5) var(--s4) var(--s10); }
+  .hero h2.display { font-size: 36px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat .v { font-size: 26px; }
+  .live { grid-template-columns: 1fr; }
+  section { padding-top: var(--s12); }
+  h2 { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="top">
-    <a class="mark" href="#">Tremor</a>
-    <nav><a href="#live">Live</a><a href="#results">Results</a><a href="#proof">Proof</a><a href="https://github.com/Mhiah/Tremor">GitHub</a></nav>
-  </header>
+<div class="shell">
+  <aside class="side" aria-label="Tremor">
+    <a class="brand" href="#overview">Tremor</a>
+    <nav aria-label="Sections">
+      <a href="#overview" aria-current="true">Overview</a>
+      <a href="#live">Live</a>
+      <a href="#results">Results</a>
+      <a href="#how">How it works</a>
+      <a href="#proof">Contracts</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <div class="wallet" aria-live="polite">
+      <p class="label"><span class="dot-live"></span>Reactive contract</p>
+      <div class="num" id="side-react">… lREACT</div>
+      <p id="side-moves">Checking test funds…</p>
+    </div>
+  </aside>
 
-  <div class="hero">
-    <h1>A price shock on Base reaches the pool on Unichain in 3 seconds.</h1>
-    <p class="lede">Tremor carries the market price across chains with Reactive Omni, then charges arbitrage for trading against a stale pool. The extra fee stays with the people who supplied the liquidity.</p>
-
-    <figure class="seismo" aria-labelledby="seismo-cap">
-      <svg viewBox="0 0 1000 300" role="img" aria-label="Three traces, one per chain. The price shock appears on Base Sepolia at 0 seconds, is validated on Reactive Lasna in the same second, and lands on Unichain Sepolia at 3 seconds.">
-        <g id="seismo-grid"></g>
-        <g id="seismo-pens"></g>
-      </svg>
-      <figcaption id="seismo-cap">
-        <span>The first live loop, read from on-chain block timestamps.</span>
-        <a href="https://sepolia.basescan.org/tx/0xb2a1ada23158938a91b3c99422455ab77edef10853ebf006d49b1e96547396fb">Base trade</a>
-        <a href="https://lasna.reactscan.net/tx/0xdcc2123f9c78309987ac89404d33261b7d4bada0c7a6564acd10fc3920ee37e7">Lasna validation</a>
-        <a href="https://sepolia.uniscan.xyz/tx/0x2350493ecca5a41df54108beb20fcddb5590449f883e1158cc39bb0fa848b769">Unichain update</a>
-      </figcaption>
-    </figure>
-  </div>
-
-  <section id="live" aria-labelledby="live-h">
-    <h2 id="live-h">Move the market and watch it land</h2>
-    <p class="intro">Push the test market on Base up or down. Reactive picks up the move and updates the Tremor pool on Unichain on its own, with no server in between. Then watch the pool's fee change below.</p>
-    <div class="mover">
-      <div class="mover-actions">
-        <button type="button" class="btn" data-dir="up">Push the price up</button>
-        <button type="button" class="btn" data-dir="down">Push the price down</button>
-        <p class="mover-note" id="mover-note" role="status">Checking whether the market can move…</p>
+  <main>
+    <header class="page-head" id="overview">
+      <div>
+        <p class="muted" id="last-read">Live from Unichain Sepolia</p>
+        <h1>Cross-chain LP protection</h1>
       </div>
-      <ol class="track" id="track" hidden>
-        <li id="t-base"><span class="dot"></span><div><b>Base Sepolia</b> <span class="t-msg">The market trade is being sent.</span></div></li>
-        <li id="t-lasna"><span class="dot"></span><div><b>Reactive Lasna</b> <span class="t-msg">Waiting for Reactive to pick up the move.</span></div></li>
-        <li id="t-uni"><span class="dot"></span><div><b>Unichain Sepolia</b> <span class="t-msg">Waiting for the pool's reference to update.</span></div></li>
+      <a class="btn-outline" href="https://github.com/Mhiah/Tremor/tree/main/experiment/results">Export data</a>
+    </header>
+
+    <div class="hero">
+      <h2 class="display">A price shock on Base reaches the pool on Unichain in 3 seconds.</h2>
+      <p class="lede">Tremor carries the market price across chains with Reactive Omni, then charges arbitrage for trading against a stale pool. The extra fee stays with the people who supplied the liquidity.</p>
+
+      <div class="stats">
+        <div class="card stat lead"><p class="k">LP loss vs the static pool</p><div class="v" id="cut">82%</div><p class="chg">less lost to arbitrage once Tremor's update lands</p></div>
+        <div class="card stat"><p class="k">Base event to Unichain update</p><div class="v" id="f-loop">2–3 s</div><p class="chg good">every live move</p></div>
+        <div class="card stat"><p class="k">Bot trades measured</p><div class="v" id="f-trades">77 trades</div><p class="chg">across <span id="f-moves">11</span> market moves</p></div>
+        <div class="card stat"><p class="k">LP loss, every trade</p><div class="v" id="f-all">97%</div><p class="chg good">lower, including bots that planned on the old fee and lost money</p></div>
+      </div>
+
+      <figure class="card seismo" aria-labelledby="seismo-cap">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="Three traces, one per chain. The price shock appears on Base Sepolia at 0 seconds, is validated on Reactive Lasna in the same second, and lands on Unichain Sepolia at 3 seconds.">
+          <g id="seismo-grid"></g>
+          <g id="seismo-pens"></g>
+        </svg>
+        <figcaption id="seismo-cap">
+          <span>The first live loop, read from on-chain block timestamps.</span>
+          <a href="https://sepolia.basescan.org/tx/0xb2a1ada23158938a91b3c99422455ab77edef10853ebf006d49b1e96547396fb">Base trade</a>
+          <a href="https://lasna.reactscan.net/tx/0xdcc2123f9c78309987ac89404d33261b7d4bada0c7a6564acd10fc3920ee37e7">Lasna validation</a>
+          <a href="https://sepolia.uniscan.xyz/tx/0x2350493ecca5a41df54108beb20fcddb5590449f883e1158cc39bb0fa848b769">Unichain update</a>
+        </figcaption>
+      </figure>
+    </div>
+
+    <section id="live" aria-labelledby="live-h">
+      <h2 id="live-h">Move the market and watch it land</h2>
+      <p class="intro">Push the test market on Base up or down. Reactive picks up the move and updates the Tremor pool on Unichain on its own, with no server in between. Then watch the pool's fee change below.</p>
+      <div class="mover">
+        <div class="card mover-actions">
+          <button type="button" class="btn" data-dir="up">Push the price up</button>
+          <button type="button" class="btn-outline" data-dir="down">Push the price down</button>
+          <p class="mover-note" id="mover-note" role="status">Checking whether the market can move…</p>
+        </div>
+        <div class="card">
+          <p class="track-empty" id="track-empty">The move will be followed here, chain by chain.</p>
+          <ol class="track" id="track" hidden>
+            <li id="t-base"><span class="dot"></span><div><b>Base Sepolia</b> <span class="t-msg">The market trade is being sent.</span></div></li>
+            <li id="t-lasna"><span class="dot"></span><div><b>Reactive Lasna</b> <span class="t-msg">Waiting for Reactive to pick up the move.</span></div></li>
+            <li id="t-uni"><span class="dot"></span><div><b>Unichain Sepolia</b> <span class="t-msg">Waiting for the pool's reference to update.</span></div></li>
+          </ol>
+        </div>
+      </div>
+      <h3 class="sub" id="now-h">Right now on Unichain</h3>
+      <div class="live">
+        <div class="card">
+          <p class="k">Reference price, tUSD per tETH</p>
+          <div class="v" id="ref-price">…</div>
+          <p class="note" id="ref-meta">Waiting for Unichain.</p>
+        </div>
+        <div class="card">
+          <p class="k">How far Tremor trusts it</p>
+          <div class="v" id="ref-conf">…</div>
+          <p class="note">Falls to zero when the two Base sources disagree, or as the update ages.</p>
+        </div>
+        <div class="card">
+          <table class="fees">
+            <thead><tr><th>Fee right now</th><th class="r">Static</th><th class="r">Tremor</th></tr></thead>
+            <tbody>
+              <tr><td>Buy tETH</td><td class="n" id="fee-s-buy">…</td><td class="n" id="fee-t-buy">…</td></tr>
+              <tr><td>Sell tETH</td><td class="n" id="fee-s-sell">…</td><td class="n" id="fee-t-sell">…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="status" id="live-status" role="status"></p>
+      <h3 class="sub">Latest loops</h3>
+      <p class="intro">Every update Reactive has delivered recently, newest first, with its transactions on each chain.</p>
+      <div class="card table-wrap"><table class="proof" id="loops"><tbody><tr><td>Loading recent loops…</td></tr></tbody></table></div>
+    </section>
+
+    <section id="results" aria-labelledby="results-h">
+      <h2 id="results-h">What the live experiment showed</h2>
+      <p class="intro">Each market move on Base was tested against pairs of pools on Unichain that are identical except for Tremor. A bot arbitraged both pools of a pair at the same moment. LP loss is what the bot made, valued at the market price.</p>
+      <div class="headline">
+        <div class="big" id="cut-big">82%</div>
+        <p>less lost to arbitrage by <strong>Tremor LPs</strong> than by LPs in the identical static pool, when the bot traded after Tremor's update landed.</p>
+      </div>
+      <div class="chart-row">
+        <div class="card chart" id="chart">
+          <div class="legend"><span><i style="background:var(--color-secondary)"></i>Static pool, 0.30% fee</span><span><i style="background:var(--color-primary)"></i>Tremor pool</span></div>
+          <svg id="bars" viewBox="0 0 1040 360" role="img" aria-label="Grouped bars: LP loss to arbitrage in the static pool and the Tremor pool for each of the market moves."></svg>
+          <div class="tip" id="tip"></div>
+        </div>
+        <div class="card">
+          <h3>By mode</h3>
+          <p class="intro small">Four pools, the same 3 moves and a faked price feed. Bars show LP loss avoided against the static pool.</p>
+          <ul class="modes" id="modes"></ul>
+        </div>
+      </div>
+      <details class="table"><summary>See the numbers as a table</summary><div class="card table-wrap"><table class="proof" id="moves-table"></table></div></details>
+    </section>
+
+    <section id="how" aria-labelledby="how-h">
+      <h2 id="how-h">How a price move travels</h2>
+      <p class="intro">No bot, keeper or server sits in the middle. Each step is a contract reacting to the one before it.</p>
+      <ol class="steps">
+        <li class="card"><h3>The market moves</h3><p>A trade in the tETH/tUSD pool and a price report from the feed each announce the new price.</p><p class="chain"><span class="badge">Base Sepolia</span></p></li>
+        <li class="card"><h3>Reactive checks it</h3><p>Tremor's reactive contract confirms both sources agree, scores how far it trusts the price, and sends it on.</p><p class="chain"><span class="badge">Reactive Lasna</span></p></li>
+        <li class="card"><h3>The pool prices the gap</h3><p>On every swap, the hook compares the pool price with the reference. Trades that exploit the gap pay a surcharge to LPs; everyone else pays the normal fee.</p><p class="chain"><span class="badge">Unichain Sepolia</span></p></li>
       </ol>
-    </div>
-    <h3 class="sub" id="now-h">Right now on Unichain</h3>
-    <div class="live">
-      <div>
-        <p class="k">Reference price, tUSD per tETH</p>
-        <div class="v" id="ref-price">…</div>
-        <p class="note" id="ref-meta">Waiting for Unichain.</p>
+    </section>
+
+    <section id="proof" aria-labelledby="proof-h">
+      <h2 id="proof-h">Check it yourself</h2>
+      <p class="intro">Every contract is deployed and every number on this page links to its transactions.</p>
+      <div class="card table-wrap">
+      <table class="proof">
+        <thead><tr><th>Contract</th><th>Network</th><th>Address</th></tr></thead>
+        <tbody>
+          <tr><td>Tremor hook</td><td>Unichain Sepolia</td><td><a href="https://sepolia.uniscan.xyz/address/0x6c19C2F3F2F8e976b6799d40c5049EcFEb22a080"><code>0x6c19C2F3F2F8e976b6799d40c5049EcFEb22a080</code></a></td></tr>
+          <tr><td>Reference store</td><td>Unichain Sepolia</td><td><a href="https://sepolia.uniscan.xyz/address/0x508f12C53d3e57473291c544Df070A5e8B0464C5"><code>0x508f12C53d3e57473291c544Df070A5e8B0464C5</code></a></td></tr>
+          <tr><td>Validation engine</td><td>Reactive Lasna</td><td><a href="https://lasna.reactscan.net/address/0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512"><code>0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512</code></a></td></tr>
+          <tr><td>Price feed</td><td>Base Sepolia</td><td><a href="https://sepolia.basescan.org/address/0x813737EC15992C390E9C6471851B3c92FcCB4758"><code>0x813737EC15992C390E9C6471851B3c92FcCB4758</code></a></td></tr>
+          <tr><td>tETH/tUSD market pool</td><td>Base Sepolia</td><td>Pool <code>0xded3b3…ad5b4</code> on <a href="https://sepolia.basescan.org/address/0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408">Uniswap v4</a></td></tr>
+        </tbody>
+      </table>
       </div>
-      <div>
-        <p class="k">How far Tremor trusts it</p>
-        <div class="v" id="ref-conf">…</div>
-        <p class="note">Falls to zero when the two Base sources disagree, or as the update ages.</p>
-      </div>
-      <div>
-        <table class="fees">
-          <thead><tr><th>Fee right now</th><th style="text-align:right">Static</th><th style="text-align:right">Tremor</th></tr></thead>
-          <tbody>
-            <tr><td>Buy tETH</td><td class="n" id="fee-s-buy">…</td><td class="n" id="fee-t-buy">…</td></tr>
-            <tr><td>Sell tETH</td><td class="n" id="fee-s-sell">…</td><td class="n" id="fee-t-sell">…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <p class="status" id="live-status" role="status"></p>
-    <h3 class="sub">Latest loops</h3>
-    <p class="intro">Every update Reactive has delivered recently, newest first, with its transactions on each chain.</p>
-    <div class="proof-wrap"><table class="proof" id="loops"><tbody><tr><td>Loading recent loops…</td></tr></tbody></table></div>
-  </section>
+    </section>
 
-  <section id="results" aria-labelledby="results-h">
-    <h2 id="results-h">What the live experiment showed</h2>
-    <p class="intro">Each market move on Base was tested against pairs of pools on Unichain that are identical except for Tremor. A bot arbitraged both pools of a pair at the same moment. LP loss is what the bot made, valued at the market price.</p>
-    <div class="headline">
-      <div class="big" id="cut">82%</div>
-      <p>less lost to arbitrage by <strong>Tremor LPs</strong> than by LPs in the identical static pool, when the bot traded after Tremor's update landed.</p>
-    </div>
-    <div class="chart" id="chart">
-      <div class="legend"><span><i style="background:var(--static)"></i>Static pool, 0.30% fee</span><span><i style="background:var(--tremor)"></i>Tremor pool</span></div>
-      <svg id="bars" viewBox="0 0 1040 360" role="img" aria-label="Grouped bars: LP loss to arbitrage in the static pool and the Tremor pool for each of the market moves."></svg>
-      <div class="tip" id="tip"></div>
-    </div>
-    <div class="facts">
-      <div><div class="v" id="f-loop">2–3 s</div><div class="k">Base event to Unichain update, every move</div></div>
-      <div><div class="v" id="f-trades">77 trades</div><div class="k">across <span id="f-moves">11</span> market moves</div></div>
-      <div><div class="v" id="f-all">97%</div><div class="k">lower LP loss over every trade, including bots that planned on the old fee and lost money</div></div>
-    </div>
-    <details class="table"><summary>See the numbers as a table</summary><div class="proof-wrap"><table class="proof" id="moves-table"></table></div></details>
-  </section>
+    <section id="limits" aria-labelledby="limits-h">
+      <h2 id="limits-h">What this test does not show</h2>
+      <ul class="limits">
+        <li>The market, the price feed and the arbitrage bots are our own scripts on testnet.</li>
+        <li>An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. A test bot that pre-signed its trades did exactly that on all 3 tries, landing in the same second as the market move; the experiment's slower bots never did.</li>
+        <li>11 market moves is a small sample, limited by testnet funds. The runner is in the repository so anyone can run more.</li>
+      </ul>
+    </section>
 
-  <section aria-labelledby="how-h">
-    <h2 id="how-h">How a price move travels</h2>
-    <p class="intro">No bot, keeper or server sits in the middle. Each step is a contract reacting to the one before it.</p>
-    <ol class="steps">
-      <li><h3>The market moves</h3><p>A trade in the tETH/tUSD pool and a price report from the feed each announce the new price.</p><p class="chain">Base Sepolia</p></li>
-      <li><h3>Reactive checks it</h3><p>Tremor's reactive contract confirms both sources agree, scores how far it trusts the price, and sends it on.</p><p class="chain">Reactive Lasna</p></li>
-      <li><h3>The pool prices the gap</h3><p>On every swap, the hook compares the pool price with the reference. Trades that exploit the gap pay a surcharge to LPs; everyone else pays the normal fee.</p><p class="chain">Unichain Sepolia</p></li>
-    </ol>
-  </section>
-
-  <section id="proof" aria-labelledby="proof-h">
-    <h2 id="proof-h">Check it yourself</h2>
-    <p class="intro">Every contract is deployed and every number on this page links to its transactions.</p>
-    <div class="proof-wrap">
-    <table class="proof">
-      <thead><tr><th>Contract</th><th>Network</th><th>Address</th></tr></thead>
-      <tbody>
-        <tr><td>Tremor hook</td><td>Unichain Sepolia</td><td><a href="https://sepolia.uniscan.xyz/address/0x6c19C2F3F2F8e976b6799d40c5049EcFEb22a080"><code>0x6c19C2F3F2F8e976b6799d40c5049EcFEb22a080</code></a></td></tr>
-        <tr><td>Reference store</td><td>Unichain Sepolia</td><td><a href="https://sepolia.uniscan.xyz/address/0x508f12C53d3e57473291c544Df070A5e8B0464C5"><code>0x508f12C53d3e57473291c544Df070A5e8B0464C5</code></a></td></tr>
-        <tr><td>Validation engine</td><td>Reactive Lasna</td><td><a href="https://lasna.reactscan.net/address/0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512"><code>0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512</code></a></td></tr>
-        <tr><td>Price feed</td><td>Base Sepolia</td><td><a href="https://sepolia.basescan.org/address/0x813737EC15992C390E9C6471851B3c92FcCB4758"><code>0x813737EC15992C390E9C6471851B3c92FcCB4758</code></a></td></tr>
-        <tr><td>tETH/tUSD market pool</td><td>Base Sepolia</td><td>Pool <code>0xded3b3…ad5b4</code> on <a href="https://sepolia.basescan.org/address/0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408">Uniswap v4</a></td></tr>
-      </tbody>
-    </table>
-    </div>
-  </section>
-
-  <section aria-labelledby="limits-h">
-    <h2 id="limits-h">What this test does not show</h2>
-    <ul class="limits">
-      <li>The market, the price feed and the arbitrage bots are our own scripts on testnet.</li>
-      <li>An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. A test bot that pre-signed its trades did exactly that on all 3 tries, landing in the same second as the market move; the experiment's slower bots never did.</li>
-      <li>11 market moves is a small sample, limited by testnet funds. The runner is in the repository so anyone can run more.</li>
-    </ul>
-  </section>
-
-  <footer>
-    <span>Tremor, built for the Reactive Omni Buildathon, Track 1: Every Second Counts.</span>
-    <a href="https://github.com/Mhiah/Tremor">Source and raw data on GitHub</a>
-  </footer>
+    <footer>
+      <span>Tremor, built for the Reactive Omni Buildathon, Track 1: Every Second Counts.</span>
+      <a href="https://github.com/Mhiah/Tremor">Source and raw data on GitHub</a>
+    </footer>
+  </main>
 </div>
 
 <script src="data.js"></script>
@@ -349,6 +490,17 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
   if (R) {
     const T = R.totals;
     document.getElementById("cut").textContent = T.lossCutPct + "%";
+    document.getElementById("cut-big").textContent = T.lossCutPct + "%";
+    if (R.modes) {
+      const best = "D";
+      document.getElementById("modes").innerHTML = R.modes.map(m => {
+        const why = m.mode === "A" ? ["", "The control: no protection."]
+          : m.ordinaryFeeBps > 30 ? ["bad", `Charges ordinary traders ${m.ordinaryFeeBps} bps.`]
+          : m.fakePriceFeeBps > 30 ? ["bad", `Charges ${m.fakePriceFeeBps} bps on a faked price.`]
+          : ["good", "Ordinary traders and faked prices pay the normal 30 bps."];
+        return `<li class="${m.mode === best ? "best" : ""}"><div class="row"><span>${m.mode}: ${m.label}</span><span class="num">${m.lossCutPct}%</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(m.lossCutPct, 1)}%"></div></div><p class="why ${why[0]}">${why[1]}</p></li>`;
+      }).join("");
+    }
     document.getElementById("f-loop").textContent = (T.loopMinS === T.loopMaxS ? T.loopMinS : T.loopMinS + "–" + T.loopMaxS) + " s";
     document.getElementById("f-trades").textContent = T.trades + " trades";
     document.getElementById("f-moves").textContent = T.moves;
@@ -370,8 +522,8 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       const cx = L + band * i + band / 2;
       const g = el("g", { class: "col", tabindex: 0, role: "img", "aria-label": `Move of ${m.movePct}%: static pool LP loss ${fmt(m.staticLoss)} tUSD, Tremor pool ${fmt(m.tremorLoss)} tUSD` }, svg);
       const bar = (x, v, c) => { const y = sy(Math.max(v, 0)), h = Math.max(sy(0) - y, 1); el("path", { d: `M ${x} ${sy(0)} V ${y + 4} Q ${x} ${y} ${x + 4} ${y} H ${x + bw - 4} Q ${x + bw} ${y} ${x + bw} ${y + 4} V ${sy(0)} Z`, fill: c, class: "bar" }, g); };
-      bar(cx - bw - 1, m.staticLoss, "var(--static)");
-      bar(cx + 1, m.tremorLoss || 0, "var(--tremor)");
+      bar(cx - bw - 1, m.staticLoss, "var(--color-secondary)");
+      bar(cx + 1, m.tremorLoss || 0, "var(--color-primary)");
       const t = el("text", { x: cx, y: H - B + 20, "text-anchor": "middle", class: "axis" }, svg);
       t.textContent = (m.movePct > 0 ? "+" : "") + m.movePct.toFixed(1) + "%";
       el("rect", { x: cx - band / 2, y: Tm, width: band, height: H - Tm - B, class: "hit" }, g);
@@ -424,6 +576,7 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       const [sb, ss, tb, ts] = await Promise.all([quote(60, false), quote(60, true), quote(30, false), quote(30, true)]);
       const set = (id, v, base) => { const c = document.getElementById(id); c.textContent = bps(v); c.classList.toggle("up", v > base); };
       set("fee-s-buy", sb, sb); set("fee-s-sell", ss, ss); set("fee-t-buy", tb, sb); set("fee-t-sell", ts, ss);
+      document.getElementById("last-read").textContent = "Live from Unichain Sepolia, last read " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       status.textContent = age >= 60
         ? "The last update is over a minute old, so Tremor charges only the normal fee until the market moves again."
         : "Read from Unichain Sepolia just now.";
@@ -463,13 +616,18 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     tick(); cooldownTimer = setInterval(tick, 1000);
   }
   async function loadStatus() {
-    try { const r = await fetch("/api/move"); const j = await r.json(); if (!r.ok) throw new Error(j.error); setWait(j.waitSeconds, j.movesLeft); }
-    catch (e) { buttons.forEach(b => b.disabled = true); note.textContent = "The move button isn't available right now. The live readout below still works."; }
+    try {
+      const r = await fetch("/api/move"); const j = await r.json(); if (!r.ok) throw new Error(j.error); setWait(j.waitSeconds, j.movesLeft);
+      document.getElementById("side-react").textContent = Number(j.reactReserves).toFixed(2) + " lREACT";
+      document.getElementById("side-moves").textContent = `About ${j.movesLeft} market moves left on test funds.`;
+    }
+    catch (e) { buttons.forEach(b => b.disabled = true); note.textContent = "The move button isn't available right now. The live readout below still works."; document.getElementById("side-moves").textContent = "Test fund status unavailable."; }
   }
   async function blockTs(url, num) { return hexN((await rpc(url, "eth_getBlockByNumber", [num, false])).timestamp); }
 
   async function track(move) {
     document.getElementById("track").hidden = false;
+    document.getElementById("track-empty").hidden = true;
     step("t-base", "busy", "Sending the market trade…");
     step("t-lasna", "", "Waiting for Reactive to pick up the move.");
     step("t-uni", "", "Waiting for the pool's reference to update.");
@@ -542,6 +700,13 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     } catch (e) { table.innerHTML = "<tbody><tr><td>Couldn't load recent loops. Refresh to try again.</td></tr></tbody>"; }
   }
   loadStatus(); loadLoops(); setInterval(loadLoops, 30000);
+
+  // ---------- Sidebar: mark the section in view ----------
+  const navLinks = [...document.querySelectorAll(".side nav a")];
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) navLinks.forEach(a => a.setAttribute("aria-current", a.getAttribute("href") === "#" + e.target.id ? "true" : "false")); });
+  }, { rootMargin: "-30% 0px -60% 0px" });
+  ["overview", "live", "results", "how", "proof", "limits"].forEach(id => { const el = document.getElementById(id); if (el) spy.observe(el); });
 })();
 </script>
 </body>
