@@ -118,6 +118,14 @@ h3.sub { font: 700 22px/1.2 var(--display); margin: 0 0 12px; }
 .facts .v { font: 400 27px/1.1 var(--mono); letter-spacing: -0.02em; }
 .facts .k { font-size: 14px; color: var(--ink-2); }
 details.table { margin-top: 18px; font-size: 14px; }
+.extra { margin-top: 56px; }
+.extra .intro { margin: 0 0 16px; max-width: 64ch; color: var(--ink-2); }
+.extra .cap { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 14px; font-size: 13.5px; color: var(--ink-2); }
+table.modes td.n, table.modes th.n { text-align: right; }
+table.modes td.n { font: 400 15px var(--mono); }
+table.modes tr.full td { font-weight: 700; color: var(--ink); }
+table.modes tr.full td:first-child { box-shadow: inset 3px 0 0 var(--tremor); padding-left: 10px; }
+.extra .takeaway { margin: 14px 0 0; max-width: 64ch; }
 details.table summary { cursor: pointer; color: var(--ink-2); }
 details.table table { margin-top: 10px; }
 
@@ -242,6 +250,32 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       <div><div class="v" id="f-all">97%</div><div class="k">lower LP loss over every trade, including bots that planned on the old fee and lost money</div></div>
     </div>
     <details class="table"><summary>See the numbers as a table</summary><div class="proof-wrap"><table class="proof" id="moves-table"></table></div></details>
+
+    <div class="extra" aria-labelledby="fake-h">
+      <h3 class="sub" id="fake-h">A faked price doesn't get through</h3>
+      <p class="intro">We pushed the price feed 5% above the market while the market itself stayed put. Reactive saw its two sources disagree and gave the price no trust, so a trade toward the fake price paid the normal fee.</p>
+      <div class="facts">
+        <div><div class="v">0%</div><div class="k">trust Reactive gave the faked price</div></div>
+        <div><div class="v">0.30%</div><div class="k">fee the trade paid, the normal fee</div></div>
+        <div><div class="v">1.78%</div><div class="k">fee it would have paid if the fake price were trusted</div></div>
+      </div>
+      <p class="cap"><span>Live run, read from the transactions.</span><a href="https://sepolia.basescan.org/tx/0x402de3288cc33fe63f89fbe0ec9cad9679641b321a3e00408921bb26066e6e22">Feed pushed 5%</a><a href="https://lasna.reactscan.net/tx/0x5c80bfbddafe7bc74dfc316a6c0f34dcb301c8d63328f48909017365b14ca0d9">Lasna: 0% trust</a><a href="https://sepolia.uniscan.xyz/tx/0xce49b20d942a749a102deb545b3381584f65b71a3b44d45fbfc34564750a0082">Trade on Unichain</a></p>
+    </div>
+
+    <div class="extra" aria-labelledby="modes-h">
+      <h3 class="sub" id="modes-h">Why Tremor checks both direction and trust</h3>
+      <p class="intro">Four pools faced the same 3 market moves and the same faked price. Each one switches on a different part of Tremor.</p>
+      <div class="proof-wrap"><table class="proof modes">
+        <thead><tr><th>Pool</th><th class="n">LP loss cut</th><th class="n">An ordinary trade pays</th><th class="n">A trade on a faked price pays</th></tr></thead>
+        <tbody>
+          <tr><td>A: Static pool (control)</td><td class="n">0%</td><td class="n">0.30%</td><td class="n">0.30%</td></tr>
+          <tr><td>B: Gap fee, no direction</td><td class="n">89%</td><td class="n">1.78%</td><td class="n">1.78%</td></tr>
+          <tr><td>C: Direction-aware, trusts any price</td><td class="n">89%</td><td class="n">0.30%</td><td class="n">1.78%</td></tr>
+          <tr class="full"><td>D: Full Tremor</td><td class="n">80%</td><td class="n">0.30%</td><td class="n">0.30%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="takeaway">Only full Tremor keeps most of the protection while charging ordinary trades and faked prices the normal fee.</p>
+    </div>
   </section>
 
   <section aria-labelledby="how-h">
