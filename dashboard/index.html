@@ -78,6 +78,25 @@ h2 { font: 600 34px/1.1 var(--cond); letter-spacing: -0.015em; margin: 0 0 10px;
 .fees td.n.up { color: var(--tremor); }
 .status { font-size: 13.5px; color: var(--ink-3); margin-top: 12px; }
 
+/* Mover */
+.mover { display: grid; grid-template-columns: minmax(260px, 1fr) 1.4fr; gap: 28px; margin: 0 0 36px; align-items: start; }
+.mover-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { font: 600 16px var(--cond); color: #fff; background: var(--ink); border: 0; border-radius: 4px; padding: 12px 18px; cursor: pointer; }
+.btn:hover { background: #2b3a43; }
+.btn:disabled { background: var(--rule); color: var(--ink-3); cursor: not-allowed; }
+.mover-note { flex-basis: 100%; margin: 4px 0 0; font-size: 14px; color: var(--ink-2); }
+.track { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--rule); }
+.track li { display: flex; gap: 12px; align-items: flex-start; padding: 0 0 16px 0; margin-left: -7px; font-size: 15px; }
+.track li:last-child { padding-bottom: 0; }
+.track .dot { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--sheet); border: 2px solid var(--rule); margin-top: 5px; }
+.track li.busy .dot { border-color: var(--ink); }
+.track li.done .dot { background: var(--tremor); border-color: var(--tremor); }
+.track li.fail .dot { background: var(--ink-3); border-color: var(--ink-3); }
+.track .t-msg { color: var(--ink-2); }
+@media (prefers-reduced-motion: no-preference) { .track li.busy .dot { animation: pulse 1s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .35; } } }
+h3.sub { font: 600 22px/1.2 var(--cond); margin: 0 0 12px; }
+#loops td.when { color: var(--ink-2); white-space: nowrap; }
+
 /* Results */
 .headline { display: grid; grid-template-columns: auto 1fr; gap: 0 28px; align-items: end; margin-bottom: 30px; }
 .headline .big { font: 600 clamp(72px, 11vw, 132px)/0.85 var(--cond); letter-spacing: -0.03em; }
@@ -128,6 +147,7 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
   .top nav a { margin-left: 14px; }
   .seismo { padding: 16px 12px 12px; }
   .live { grid-template-columns: 1fr; }
+  .mover { grid-template-columns: 1fr; }
   .live > div { border-left: 0; border-top: 1px solid var(--rule); }
   .live > div:first-child { border-top: 0; }
   .headline { grid-template-columns: 1fr; gap: 12px; }
@@ -163,8 +183,21 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
   </div>
 
   <section id="live" aria-labelledby="live-h">
-    <h2 id="live-h">Right now on Unichain</h2>
-    <p class="intro">Read straight from the contracts on Unichain Sepolia each time this page refreshes. The fee is what a trade would pay this second.</p>
+    <h2 id="live-h">Move the market and watch it land</h2>
+    <p class="intro">Push the test market on Base up or down. Reactive picks up the move and updates the Tremor pool on Unichain on its own, with no server in between. Then watch the pool's fee change below.</p>
+    <div class="mover">
+      <div class="mover-actions">
+        <button type="button" class="btn" data-dir="up">Push the price up</button>
+        <button type="button" class="btn" data-dir="down">Push the price down</button>
+        <p class="mover-note" id="mover-note" role="status">Checking whether the market can move…</p>
+      </div>
+      <ol class="track" id="track" hidden>
+        <li id="t-base"><span class="dot"></span><div><b>Base Sepolia</b> <span class="t-msg">The market trade is being sent.</span></div></li>
+        <li id="t-lasna"><span class="dot"></span><div><b>Reactive Lasna</b> <span class="t-msg">Waiting for Reactive to pick up the move.</span></div></li>
+        <li id="t-uni"><span class="dot"></span><div><b>Unichain Sepolia</b> <span class="t-msg">Waiting for the pool's reference to update.</span></div></li>
+      </ol>
+    </div>
+    <h3 class="sub" id="now-h">Right now on Unichain</h3>
     <div class="live">
       <div>
         <p class="k">Reference price, tUSD per tETH</p>
@@ -187,6 +220,9 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       </div>
     </div>
     <p class="status" id="live-status" role="status"></p>
+    <h3 class="sub">Latest loops</h3>
+    <p class="intro">Every update Reactive has delivered recently, newest first, with its transactions on each chain.</p>
+    <div class="proof-wrap"><table class="proof" id="loops"><tbody><tr><td>Loading recent loops…</td></tr></tbody></table></div>
   </section>
 
   <section id="results" aria-labelledby="results-h">
@@ -396,6 +432,116 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     }
   }
   refresh(); setInterval(refresh, 15000);
+
+  // ---------- Move the market: one click, three chains ----------
+  const BASE_RPC = "https://sepolia.base.org", LASNA_RPC = "https://lasna-rpc.rnk.dev/";
+  const LASNA_REACTIVE = "0x42338a1E7607CC56d19Adc97cD92dd9F9C5Dd512";
+  const T_PUBLISHED = "0x0b70c40eca7ada1816a8275a541651a1297ef42888a89eac48ee7f0eafe5bc41";
+  const T_UPDATED = "0x6f39d620e240faee5a0f874cfcd8c682fe48da72e592555de85be81228e0f86b";
+  const rpc = async (url, method, params) => {
+    const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+    const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result;
+  };
+  const hexN = h => parseInt(h, 16);
+  const short = h => h.slice(0, 10) + "…" + h.slice(-4);
+  const link = (base, h) => `<a href="${base}${h}">${short(h)}</a>`;
+  const BASESCAN = "https://sepolia.basescan.org/tx/", REACTSCAN = "https://lasna.reactscan.net/tx/", UNISCAN = "https://sepolia.uniscan.xyz/tx/";
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const note = document.getElementById("mover-note"), buttons = [...document.querySelectorAll(".btn[data-dir]")];
+
+  function step(id, state, html) {
+    const li = document.getElementById(id); li.className = state; li.querySelector(".t-msg").innerHTML = html;
+  }
+  let cooldownTimer = null;
+  function setWait(sec, movesLeft) {
+    clearInterval(cooldownTimer);
+    if (movesLeft < 1) { buttons.forEach(b => b.disabled = true); note.textContent = "Moves are paused: Tremor's test REACT is low, and the loop is kept alive for judging."; return; }
+    const tick = () => {
+      if (sec <= 0) { buttons.forEach(b => b.disabled = false); note.textContent = `Ready. About ${movesLeft} moves left on testnet funds; one move a minute.`; clearInterval(cooldownTimer); return; }
+      buttons.forEach(b => b.disabled = true); note.textContent = `The market just moved. You can move it again in ${sec} s.`; sec--;
+    };
+    tick(); cooldownTimer = setInterval(tick, 1000);
+  }
+  async function loadStatus() {
+    try { const r = await fetch("/api/move"); const j = await r.json(); if (!r.ok) throw new Error(j.error); setWait(j.waitSeconds, j.movesLeft); }
+    catch (e) { buttons.forEach(b => b.disabled = true); note.textContent = "The move button isn't available right now. The live readout below still works."; }
+  }
+  async function blockTs(url, num) { return hexN((await rpc(url, "eth_getBlockByNumber", [num, false])).timestamp); }
+
+  async function track(move) {
+    document.getElementById("track").hidden = false;
+    step("t-base", "busy", "Sending the market trade…");
+    step("t-lasna", "", "Waiting for Reactive to pick up the move.");
+    step("t-uni", "", "Waiting for the pool's reference to update.");
+    // 1. Base receipt
+    let rc = null;
+    for (let i = 0; i < 60 && !rc; i++) { rc = await rpc(BASE_RPC, "eth_getTransactionReceipt", [move.baseSwapTx]).catch(() => null); if (!rc) await sleep(500); }
+    if (!rc) { step("t-base", "fail", "The trade hasn't confirmed. Check " + link(BASESCAN, move.baseSwapTx)); return; }
+    const baseTs = await blockTs(BASE_RPC, rc.blockNumber);
+    step("t-base", "done", `Price moved ${move.direction} from ${move.from.toFixed(2)} to ${move.to.toFixed(2)} tUSD. ${link(BASESCAN, move.baseSwapTx)}`);
+    step("t-lasna", "busy", "Reactive is validating the move…");
+    // 2. Lasna reaction triggered by this trade or feed report
+    const want = [move.baseSwapTx.toLowerCase(), move.baseFeedTx.toLowerCase()];
+    let pub = null;
+    for (let i = 0; i < 90 && !pub; i++) {
+      const head = hexN(await rpc(LASNA_RPC, "eth_blockNumber", []));
+      const logs = await rpc(LASNA_RPC, "eth_getLogs", [{ address: LASNA_REACTIVE, topics: [T_PUBLISHED], fromBlock: "0x" + (head - 400).toString(16), toBlock: "latest" }]).catch(() => []);
+      pub = logs.filter(l => want.includes("0x" + l.data.slice(2 + 64 * 4, 2 + 64 * 5))).pop() || null;
+      if (!pub) await sleep(700);
+    }
+    if (!pub) { step("t-lasna", "fail", "No reaction seen yet. Lasna may be busy; the latest loops list will show it when it lands."); return; }
+    const seq = hexN(pub.topics[1]), conf = hexN(pub.data.slice(2 + 64, 2 + 128));
+    step("t-lasna", "done", `Validated: update ${seq}, trust ${Math.round(conf / 100)}%. ${link(REACTSCAN, pub.transactionHash)}`);
+    step("t-uni", "busy", "Waiting for the callback to land…");
+    // 3. Unichain callback
+    let upd = null;
+    for (let i = 0; i < 90 && !upd; i++) {
+      const head = hexN(await rpc(RPC, "eth_blockNumber", []));
+      const logs = await rpc(RPC, "eth_getLogs", [{ address: STORE, topics: [T_UPDATED, "0x" + seq.toString(16).padStart(64, "0")], fromBlock: "0x" + (head - 300).toString(16), toBlock: "latest" }]).catch(() => []);
+      upd = logs[0] || null;
+      if (!upd) await sleep(700);
+    }
+    if (!upd) { step("t-uni", "fail", "Not landed yet. It will appear in the latest loops list."); return; }
+    const uniTs = hexN(upd.data.slice(2 + 64 * 3, 2 + 64 * 4));
+    step("t-uni", "done", `Pool updated <b>${uniTs - baseTs} s</b> after the Base trade. ${link(UNISCAN, upd.transactionHash)}`);
+    refresh(); loadLoops();
+  }
+
+  buttons.forEach(b => b.addEventListener("click", async () => {
+    buttons.forEach(x => x.disabled = true); note.textContent = "Moving the market on Base…";
+    try {
+      const r = await fetch("/api/move", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ direction: b.dataset.dir }) });
+      const j = await r.json();
+      if (!r.ok) { note.textContent = j.error || "The move didn't go through."; if (j.waitSeconds !== undefined) setWait(j.waitSeconds, j.movesLeft); return; }
+      setWait(60, j.movesLeft);
+      const fast = setInterval(refresh, 3000); setTimeout(() => clearInterval(fast), 90000);
+      track(j);
+    } catch (e) { note.textContent = "The move didn't go through. Try again in a minute."; buttons.forEach(x => x.disabled = false); }
+  }));
+
+  // ---------- Latest loops, read from Lasna and Unichain ----------
+  async function loadLoops() {
+    const table = document.getElementById("loops");
+    try {
+      const head = hexN(await rpc(LASNA_RPC, "eth_blockNumber", []));
+      // Lasna limits one log query to about 20,000 blocks, so read the last ~2 days in parallel chunks.
+      const CHUNK = 20000, chunks = [];
+      for (let k = 0; k < 9; k++) { const to = head - k * CHUNK, from = Math.max(0, to - CHUNK + 1); chunks.push(rpc(LASNA_RPC, "eth_getLogs", [{ address: LASNA_REACTIVE, topics: [T_PUBLISHED], fromBlock: "0x" + from.toString(16), toBlock: "0x" + to.toString(16) }]).catch(() => [])); }
+      const logs = (await Promise.all(chunks)).reverse().flat();
+      const rows = logs.slice(-6).reverse().map(l => {
+        const w = i => l.data.slice(2 + 64 * i, 2 + 64 * (i + 1));
+        return { seq: hexN(l.topics[1]), price: Number(BigInt("0x" + w(0)) / 10n ** 14n) / 1e4, conf: hexN(w(1)), at: hexN(w(2)), base: "0x" + w(4), lasna: l.transactionHash };
+      });
+      const uh = hexN(await rpc(RPC, "eth_blockNumber", []));
+      const ul = await rpc(RPC, "eth_getLogs", [{ address: STORE, topics: [T_UPDATED], fromBlock: "0x" + (uh - 999).toString(16), toBlock: "latest" }]).catch(() => []);
+      const uni = {}; ul.forEach(l => { uni[hexN(l.topics[1])] = { tx: l.transactionHash, ts: hexN(l.data.slice(2 + 64 * 3, 2 + 64 * 4)) }; });
+      const ago = t => { const s = Math.max(0, Math.round(Date.now() / 1000 - t)); return s < 90 ? s + " s ago" : s < 5400 ? Math.round(s / 60) + " min ago" : s < 172800 ? Math.round(s / 3600) + " h ago" : Math.round(s / 86400) + " days ago"; };
+      if (!rows.length) { table.innerHTML = "<tbody><tr><td>No loops in the last two days. Move the market above to start one.</td></tr></tbody>"; return; }
+      table.innerHTML = "<thead><tr><th>When</th><th>Update</th><th>Price</th><th>Trust</th><th>Base</th><th>Lasna</th><th>Unichain</th></tr></thead><tbody>" +
+        rows.map(r => `<tr><td class="when">${ago(r.at)}</td><td>${r.seq}</td><td>${r.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td><td>${Math.round(r.conf / 100)}%</td><td>${link(BASESCAN, r.base)}</td><td>${link(REACTSCAN, r.lasna)}</td><td>${uni[r.seq] ? link(UNISCAN, uni[r.seq].tx) : `<a href="https://sepolia.uniscan.xyz/address/${STORE}">on Uniscan</a>`}</td></tr>`).join("") + "</tbody>";
+    } catch (e) { table.innerHTML = "<tbody><tr><td>Couldn't load recent loops. Refresh to try again.</td></tr></tbody>"; }
+  }
+  loadStatus(); loadLoops(); setInterval(loadLoops, 30000);
 })();
 </script>
 </body>

@@ -13,3 +13,6 @@ broadcast/**/dry-run/
 .DS_Store
 .vscode/
 .idea/
+
+# Dashboard dependencies (installed by Vercel)
+dashboard/node_modules/

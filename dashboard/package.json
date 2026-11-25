@@ -1,0 +1,8 @@
+{
+  "name": "tremor-dashboard",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "viem": "^2.58.0"
+  }
+}
