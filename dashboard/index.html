@@ -126,6 +126,9 @@ table.modes td.n { font: 400 15px var(--mono); }
 table.modes tr.full td { font-weight: 700; color: var(--ink); }
 table.modes tr.full td:first-child { box-shadow: inset 3px 0 0 var(--tremor); padding-left: 10px; }
 .extra .takeaway { margin: 14px 0 0; max-width: 64ch; }
+.why { margin: 16px 0 0; max-width: 78ch; }
+.why p { margin: 0 0 6px; color: var(--ink-2); }
+.why b { color: var(--ink); font-weight: 700; }
 details.table summary { cursor: pointer; color: var(--ink-2); }
 details.table table { margin-top: 10px; }
 
@@ -226,6 +229,9 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
         </table>
       </div>
     </div>
+    <div class="why" id="fee-why" aria-live="polite">
+      <p><b>Why these fees.</b> Reading the Tremor pool's own fee check…</p>
+    </div>
     <p class="status" id="live-status" role="status"></p>
     <h3 class="sub">Latest loops</h3>
     <p class="intro">Every update Reactive has delivered recently, newest first, with its transactions on each chain.</p>
@@ -275,6 +281,17 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
         </tbody>
       </table></div>
       <p class="takeaway">Only full Tremor keeps most of the protection while charging ordinary trades and faked prices the normal fee.</p>
+    </div>
+
+    <div class="extra" aria-labelledby="lp-h">
+      <h3 class="sub" id="lp-h">What LPs earned, and what it cost to run</h3>
+      <p class="intro">The surcharge stays in the pool as fees for its LPs. Running the loop costs gas on two chains for each market move, whatever the size of the trades that follow it.</p>
+      <div class="facts">
+        <div><div class="v" id="c-earned">…</div><div class="k" id="c-earned-k">tUSD in surcharges paid to Tremor LPs</div></div>
+        <div><div class="v" id="c-rate">…</div><div class="k">median surcharge on an arbitrage trade, on top of the normal 0.30%</div></div>
+        <div><div class="v" id="c-react">…</div><div class="k" id="c-react-k">REACT per market move on Reactive</div></div>
+      </div>
+      <p class="cap"><span id="c-cap">Measured from the live runs.</span><a href="https://github.com/Mhiah/Tremor/blob/main/experiment/results/costs.json">Raw numbers</a></p>
     </div>
   </section>
 
@@ -426,6 +443,16 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       R.moves.map(m => `<tr><td>${m.movePct > 0 ? "+" : ""}${m.movePct.toFixed(2)}%</td><td>${fmt(m.from)} → ${fmt(m.to)}</td><td>${fmt(m.staticLoss)}</td><td>${fmt(m.tremorLoss)}</td><td>${m.tremorFeeBps} bps</td><td>${m.loopS} s</td><td><a href="https://sepolia.basescan.org/tx/${m.baseTx}">Base</a> · <a href="https://sepolia.uniscan.xyz/tx/${m.refTx}">Unichain</a></td></tr>`).join("") + "</tbody>";
   }
 
+  if (R && R.costs) {
+    const c = R.costs;
+    document.getElementById("c-earned").textContent = c.surchargeTusd.toLocaleString("en-US");
+    document.getElementById("c-earned-k").textContent = `tUSD in surcharges paid to Tremor LPs, across ${c.trades} bot trades`;
+    document.getElementById("c-rate").textContent = (c.medianSurchargeBps / 100).toFixed(2) + "%";
+    document.getElementById("c-react").textContent = c.reactPerMove.toFixed(3);
+    document.getElementById("c-react-k").textContent = `REACT per market move on Reactive, plus two Unichain callbacks of about ${Math.round(c.callbackGasEach / 1000)},000 gas each`;
+    document.getElementById("c-cap").textContent = `Measured from the ${c.moves} live market moves. A move's cost is fixed; the surcharge grows with the size of the arbitrage trade.`;
+  }
+
   // ---------- Live readout from Unichain Sepolia ----------
   const RPC = "https://sepolia.unichain.org";
   const STORE = "0x508f12C53d3e57473291c544Df070A5e8B0464C5";
@@ -440,9 +467,26 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
   const word = (hex, i) => BigInt("0x" + hex.slice(i * 64, i * 64 + 64));
   const SEL_LATEST = "52bfe789";      // latest()
   const SEL_QUOTE = "1c2c3cb4";       // quoteFee((address,address,uint24,int24,address),bool)
-  async function quote(spacing, zeroForOne) {
+  async function quote(spacing, zeroForOne, full) {
     const out = await call(HOOK, "0x" + SEL_QUOTE + keyWords(spacing) + pad(zeroForOne ? "1" : "0"));
-    return Number(word(out, 0));
+    const fee = Number(word(out, 0));
+    if (!full) return fee;
+    return { fee, reason: Number(word(out, 1)), gap: Number(word(out, 2)), conf: Number(word(out, 3)), adverse: word(out, 4) === 1n };
+  }
+  // Plain-language reason for a Tremor fee, from the hook's own quoteFee().
+  const pct = pips => (pips / 10000).toFixed(2) + "%";
+  function why(side, q) {
+    const verb = side === "Buy tETH" ? "buying tETH" : "selling tETH";
+    switch (q.reason) {
+      case 3: return `The last update is over a minute old, so the reference isn't used and this trade pays the normal ${pct(q.fee)}.`;
+      case 2: return `There's no reference price yet, so this trade pays the normal ${pct(q.fee)}.`;
+      case 4: return `Tremor trusts the reference only ${Math.round(q.conf / 100)}%, too little to charge more, so this trade pays the normal ${pct(q.fee)}.`;
+      case 5: if (q.gap < 50) return `The pool is at the market price, so there's no gap to charge for. This trade pays the normal ${pct(q.fee)}.`;
+        return `The pool is ${pct(q.gap)} off the market price, and ${verb} pushes it further away. That isn't arbitrage, so it pays the normal ${pct(q.fee)}.`;
+      default:
+        if (q.fee <= 3000) return `The pool is only ${pct(q.gap)} off the market price, too close to charge for, so this trade pays the normal ${pct(q.fee)}.`;
+        return `The pool is ${pct(q.gap)} off the market price, and ${verb} closes that gap, which is how arbitrage takes value from LPs. Trust is ${Math.round(q.conf / 100)}%, so the fee is ${pct(q.fee)}: most of the gap goes to LPs, and some is left so arbitrage still pays.`;
+    }
   }
   const bps = pips => (pips / 100).toFixed(pips % 100 ? 1 : 0) + " bps";
   async function refresh() {
@@ -454,9 +498,11 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
       document.getElementById("ref-price").textContent = price.toLocaleString(undefined, { maximumFractionDigits: 2 });
       document.getElementById("ref-meta").textContent = `Update number ${seq}, observed ${age < 120 ? age + " seconds" : Math.round(age / 60) + " minutes"} ago.`;
       document.getElementById("ref-conf").innerHTML = (age >= 60 ? "0" : Math.round(conf / 100 * Math.max(0, 1 - age / 60))) + "<small>%</small>";
-      const [sb, ss, tb, ts] = await Promise.all([quote(60, false), quote(60, true), quote(30, false), quote(30, true)]);
+      const [sb, ss, qb, qs] = await Promise.all([quote(60, false), quote(60, true), quote(30, false, true), quote(30, true, true)]);
+      const tb = qb.fee, ts = qs.fee;
       const set = (id, v, base) => { const c = document.getElementById(id); c.textContent = bps(v); c.classList.toggle("up", v > base); };
       set("fee-s-buy", sb, sb); set("fee-s-sell", ss, ss); set("fee-t-buy", tb, sb); set("fee-t-sell", ts, ss);
+      document.getElementById("fee-why").innerHTML = `<p><b>Buy tETH in the Tremor pool.</b> ${why("Buy tETH", qb)}</p><p><b>Sell tETH in the Tremor pool.</b> ${why("Sell tETH", qs)}</p>`;
       status.textContent = age >= 60
         ? "The last update is over a minute old, so Tremor charges only the normal fee until the market moves again."
         : "Read from Unichain Sepolia just now.";
