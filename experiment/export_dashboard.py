@@ -40,6 +40,18 @@ def main():
     t_saw = sum(m["tremorLoss"] or 0 for m in moves)
     s_all = sum(float(r["static_lp_loss_tusd"]) for r in rows)
     t_all = sum(float(r["tremor_lp_loss_tusd"]) for r in rows)
+    costs = None
+    cpath = os.path.join(HERE, "results", "costs.json")
+    if os.path.exists(cpath):
+        c = json.load(open(cpath))["summary"]
+        costs = {
+            "surchargeTusd": round(c["lp_surcharge_tusd_total"]),
+            "medianSurchargeBps": round(c["median_surcharge_bps"]),
+            "reactPerMove": round(c["per_move"]["react_per_move"], 4),
+            "reactiveGasEach": int(c["per_move"]["reactive_gas_each"]),
+            "callbackGasEach": int(c["per_move"]["callback_gas_each"]),
+            "moves": c["moves"], "trades": c["bot_trades"],
+        }
     modes = None
     mpath = os.path.join(HERE, "results", "modes.json")
     if os.path.exists(mpath):
@@ -55,6 +67,7 @@ def main():
         } for m in "ABCD"]
     data = {
         "modes": modes,
+        "costs": costs,
         "moves": moves,
         "totals": {
             "moves": len(moves), "trades": len(rows),

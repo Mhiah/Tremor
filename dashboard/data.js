@@ -30,6 +30,15 @@ window.TREMOR_RESULTS = {
    "fakePriceFeeBps": 30
   }
  ],
+ "costs": {
+  "surchargeTusd": 276979,
+  "medianSurchargeBps": 100,
+  "reactPerMove": 0.027,
+  "reactiveGasEach": 135118,
+  "callbackGasEach": 80096,
+  "moves": 11,
+  "trades": 77
+ },
  "moves": [
   {
    "label": "A1",

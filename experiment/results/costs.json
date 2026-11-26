@@ -1,0 +1,939 @@
+{
+ "summary": {
+  "moves": 11,
+  "bot_trades": 77,
+  "per_move": {
+   "reactive_txs": 2,
+   "reactive_gas_each": 135118.0,
+   "reactive_gas_price_gwei": 100.0,
+   "react_per_move": 0.0270236,
+   "unichain_callbacks": 2,
+   "callback_gas_each": 80096
+  },
+  "lp_surcharge_tusd_total": 276978.58081044705,
+  "lp_surcharge_tusd_per_move": 25179.870982767912,
+  "median_fee_bps_on_arbitrage": 129.89,
+  "median_surcharge_bps": 99.89,
+  "lp_loss_tusd": {
+   "static": 357589.4879796527,
+   "tremor": 11755.46622158889
+  },
+  "lasna_sample": [
+   {
+    "tx": "0xc70368f7ded590752862f8bbf5f71a4f9fd08036f14f79cf110fc42da836ec5d",
+    "gas": 134694,
+    "gas_price_wei": 100000000000
+   },
+   {
+    "tx": "0x97a8ae4127fb651bfa498a0d4bc991318ad43708eda7e76d2d7cabc5e4222216",
+    "gas": 135554,
+    "gas_price_wei": 100000000000
+   },
+   {
+    "tx": "0xf608c154df72f1b5632a132635a51b1080dab50a0f922986d57932449a1230e3",
+    "gas": 134706,
+    "gas_price_wei": 100000000000
+   },
+   {
+    "tx": "0xdc90b489457f926f31d021fffc431779a9912ce46167edee21659053b98b2770",
+    "gas": 135530,
+    "gas_price_wei": 100000000000
+   }
+  ]
+ },
+ "trades": [
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 0.5,
+   "fee": 12654,
+   "input_tusd": 438316.6618353681,
+   "surcharge_tusd": 4231.5090533586435,
+   "fee_tusd": 5546.459038864748,
+   "static_loss": 3536.1341359818352,
+   "tremor_loss": -708.1076427128924
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 1.0,
+   "fee": 12303,
+   "input_tusd": 438160.8963037294,
+   "surcharge_tusd": 4076.2108183135942,
+   "fee_tusd": 5390.693507224783,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": -552.3421110729022
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 2.0,
+   "fee": 11952,
+   "input_tusd": 304258.71680697263,
+   "surcharge_tusd": 2723.724032856019,
+   "fee_tusd": 3636.500183276937,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": 476.35736256590343
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 3.0,
+   "fee": 11777,
+   "input_tusd": 174902.83530277063,
+   "surcharge_tusd": 1535.1221854524179,
+   "fee_tusd": 2059.83069136073,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": 724.9208362468896
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 4.0,
+   "fee": 11601,
+   "input_tusd": 179650.1589836355,
+   "surcharge_tusd": 1545.1710174182492,
+   "fee_tusd": 2084.1214943691557,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": 760.7373834580669
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 6.0,
+   "fee": 11250,
+   "input_tusd": 189193.2374069344,
+   "surcharge_tusd": 1560.8442086072089,
+   "fee_tusd": 2128.423920828012,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": 834.7542309203105
+  },
+  {
+   "run": "run-a",
+   "move": "1",
+   "delay": 8.0,
+   "fee": 11074,
+   "input_tusd": 198708.43865068938,
+   "surcharge_tusd": 1604.3719336656661,
+   "fee_tusd": 2200.497249617734,
+   "static_loss": 3536.134135981857,
+   "tremor_loss": 876.9105882966477
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 0.5,
+   "fee": 18709,
+   "input_tusd": 690043.5723509717,
+   "surcharge_tusd": 10839.894478061415,
+   "fee_tusd": 12910.025195114331,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": -2304.638945762222
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 1.0,
+   "fee": 18138,
+   "input_tusd": 689642.2788088932,
+   "surcharge_tusd": 10439.804816609025,
+   "fee_tusd": 12508.731653035704,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": -1903.3454036835951
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 2.0,
+   "fee": 17852,
+   "input_tusd": 689441.4560288851,
+   "surcharge_tusd": 10239.584504941002,
+   "fee_tusd": 12307.908873027656,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": -1702.522623675548
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 3.0,
+   "fee": 17281,
+   "input_tusd": 261243.34081590796,
+   "surcharge_tusd": 3730.8161501919813,
+   "fee_tusd": 4514.546172639705,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": 1540.3856849736455
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 4.0,
+   "fee": 16995,
+   "input_tusd": 268838.13450457656,
+   "surcharge_tusd": 3762.389692391549,
+   "fee_tusd": 4568.904095905279,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": 1626.0271871829627
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 6.0,
+   "fee": 16424,
+   "input_tusd": 284078.2743751942,
+   "surcharge_tusd": 3813.4667552126075,
+   "fee_tusd": 4665.70157833819,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": 1803.8990406878465
+  },
+  {
+   "run": "run-a",
+   "move": "2",
+   "delay": 8.0,
+   "fee": 16424,
+   "input_tusd": 291754.3078748647,
+   "surcharge_tusd": 3916.5098289121843,
+   "fee_tusd": 4791.772752536778,
+   "static_loss": 8567.873068341503,
+   "tremor_loss": 1811.5338489704027
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 0.5,
+   "fee": 13554,
+   "input_tusd": 470989.0192344794,
+   "surcharge_tusd": 4970.818109000696,
+   "fee_tusd": 6383.785166704134,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": -923.6735447727069
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 1.0,
+   "fee": 13178,
+   "input_tusd": 470809.5624821653,
+   "surcharge_tusd": 4791.8997269434785,
+   "fee_tusd": 6204.328414389975,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": -744.2167924585467
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 2.0,
+   "fee": 12989,
+   "input_tusd": 176450.33522912665,
+   "surcharge_tusd": 1762.5623986037463,
+   "fee_tusd": 2291.9134042911264,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": 711.8985434454638
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 3.0,
+   "fee": 12612,
+   "input_tusd": 181571.8249311522,
+   "surcharge_tusd": 1745.268381238235,
+   "fee_tusd": 2289.9838560316916,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": 784.722708027486
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 4.0,
+   "fee": 12423,
+   "input_tusd": 191856.43673082505,
+   "surcharge_tusd": 1807.8632033145645,
+   "fee_tusd": 2383.4325135070394,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": 829.33463995967
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 6.0,
+   "fee": 12047,
+   "input_tusd": 202151.7408419298,
+   "surcharge_tusd": 1828.8667993969389,
+   "fee_tusd": 2435.3220219227287,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": 912.24798589293
+  },
+  {
+   "run": "run-a",
+   "move": "3",
+   "delay": 8.0,
+   "fee": 11858,
+   "input_tusd": 207268.08182069598,
+   "surcharge_tusd": 1835.980668767725,
+   "fee_tusd": 2457.7849142298132,
+   "static_loss": 4062.101890533909,
+   "tremor_loss": 955.3408835068627
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 0.5,
+   "fee": 9219,
+   "input_tusd": 289782.0141722925,
+   "surcharge_tusd": 1802.154346137487,
+   "fee_tusd": 2671.5003886543645,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": -250.7260281254637
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 1.0,
+   "fee": 9106,
+   "input_tusd": 289748.9678852008,
+   "surcharge_tusd": 1769.207197907036,
+   "fee_tusd": 2638.4541015626387,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": -217.6797410337374
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 2.0,
+   "fee": 8879,
+   "input_tusd": 118335.08912145327,
+   "surcharge_tusd": 695.6919889450238,
+   "fee_tusd": 1050.6972563093836,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": 315.56538580537864
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 3.0,
+   "fee": 8767,
+   "input_tusd": 121384.0075543619,
+   "surcharge_tusd": 700.0215715660052,
+   "fee_tusd": 1064.173594229091,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": 330.5078949901485
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 4.0,
+   "fee": 8540,
+   "input_tusd": 127478.86843615433,
+   "surcharge_tusd": 706.232931136295,
+   "fee_tusd": 1088.669536444758,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": 361.7967113981276
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 6.0,
+   "fee": 8428,
+   "input_tusd": 130552.27331549572,
+   "surcharge_tusd": 708.6377395565108,
+   "fee_tusd": 1100.2945595029978,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": 377.7784522418217
+  },
+  {
+   "run": "run-a",
+   "move": "4",
+   "delay": 8.0,
+   "fee": 8314,
+   "input_tusd": 136630.393720459,
+   "surcharge_tusd": 726.053912230519,
+   "fee_tusd": 1135.945093391896,
+   "static_loss": 1556.8510492441321,
+   "tremor_loss": 395.56774967583254
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 0.5,
+   "fee": 14932,
+   "input_tusd": 529294.5417838679,
+   "surcharge_tusd": 6315.542472565111,
+   "fee_tusd": 7903.426097916715,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": -1117.6910680747326
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 1.0,
+   "fee": 14716,
+   "input_tusd": 529178.5065889136,
+   "surcharge_tusd": 6199.855383195712,
+   "fee_tusd": 7787.390902962453,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": -1001.6558731204702
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 2.0,
+   "fee": 14281,
+   "input_tusd": 528944.9789300512,
+   "surcharge_tusd": 5967.028307309908,
+   "fee_tusd": 7553.863244100062,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": -768.1282142580791
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 3.0,
+   "fee": 14065,
+   "input_tusd": 207478.36308494248,
+   "surcharge_tusd": 2295.748087534889,
+   "fee_tusd": 2918.1831767897156,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": 995.3523940497977
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 4.0,
+   "fee": 13630,
+   "input_tusd": 219104.10989875425,
+   "surcharge_tusd": 2329.0766882237576,
+   "fee_tusd": 2986.3890179200207,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": 1099.755996601503
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 6.0,
+   "fee": 13414,
+   "input_tusd": 224912.5134923569,
+   "surcharge_tusd": 2342.2389155094047,
+   "fee_tusd": 3016.9764559864757,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": 1153.522287091428
+  },
+  {
+   "run": "run-a",
+   "move": "5",
+   "delay": 8.0,
+   "fee": 13196,
+   "input_tusd": 236571.05335619889,
+   "surcharge_tusd": 2412.078460019804,
+   "fee_tusd": 3121.7916200884006,
+   "static_loss": 5216.855042823072,
+   "tremor_loss": 1213.5168713097696
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 0.5,
+   "fee": 8057,
+   "input_tusd": 235474.2970857284,
+   "surcharge_tusd": 1190.7935203625286,
+   "fee_tusd": 1897.2164116197139,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": -161.4031975937919
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 1.0,
+   "fee": 7873,
+   "input_tusd": 235430.62599254807,
+   "surcharge_tusd": 1147.2534404616868,
+   "fee_tusd": 1853.5453184393311,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": -117.7321044134087
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 2.0,
+   "fee": 7781,
+   "input_tusd": 98567.4207916245,
+   "surcharge_tusd": 471.25083880475677,
+   "fee_tusd": 766.9531011796303,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": 212.42085717254398
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 3.0,
+   "fee": 7597,
+   "input_tusd": 100984.51063762455,
+   "surcharge_tusd": 464.22579540116004,
+   "fee_tusd": 767.1793273140338,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": 231.77847441342328
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 4.0,
+   "fee": 7505,
+   "input_tusd": 105846.42872536626,
+   "surcharge_tusd": 476.838161407775,
+   "fee_tusd": 794.3774475838737,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": 243.0888783856421
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 6.0,
+   "fee": 7321,
+   "input_tusd": 108262.49752077661,
+   "surcharge_tusd": 467.80225178727574,
+   "fee_tusd": 792.5897443496056,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": 263.80114189657627
+  },
+  {
+   "run": "run-a",
+   "move": "6",
+   "delay": 8.0,
+   "fee": 7321,
+   "input_tusd": 113134.87459824434,
+   "surcharge_tusd": 488.85579313901377,
+   "fee_tusd": 828.2604169337468,
+   "static_loss": 1032.9734527196772,
+   "tremor_loss": 265.3198845468282
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 0.0,
+   "fee": 17575,
+   "input_tusd": 685637.4447551921,
+   "surcharge_tusd": 9993.165757306924,
+   "fee_tusd": 12050.078091572503,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": -1214.8355874093422
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 0.5,
+   "fee": 17575,
+   "input_tusd": 685637.4447551921,
+   "surcharge_tusd": 9993.165757306924,
+   "fee_tusd": 12050.078091572503,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": -1214.8355874093422
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 1.0,
+   "fee": 18146,
+   "input_tusd": 686036.179170854,
+   "surcharge_tusd": 10390.703969721755,
+   "fee_tusd": 12448.812507234317,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": -1613.5700030711562
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 1.5,
+   "fee": 17289,
+   "input_tusd": 685437.9025609967,
+   "surcharge_tusd": 9794.222189694083,
+   "fee_tusd": 11850.53589737707,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": -1015.2933932139124
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 2.0,
+   "fee": 16718,
+   "input_tusd": 256096.46811316063,
+   "surcharge_tusd": 3513.131349576338,
+   "fee_tusd": 4281.42075391582,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": 1847.90191526604
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 3.0,
+   "fee": 16718,
+   "input_tusd": 271460.4894651382,
+   "surcharge_tusd": 3723.8949944827655,
+   "fee_tusd": 4538.276462878181,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": 1879.224592930474
+  },
+  {
+   "run": "run-b",
+   "move": "1",
+   "delay": 5.0,
+   "fee": 16431,
+   "input_tusd": 294452.5375697131,
+   "surcharge_tusd": 3954.7920320988164,
+   "fee_tusd": 4838.149644807956,
+   "static_loss": 8808.399876288679,
+   "tremor_loss": 1995.3939231120269
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 0.0,
+   "fee": 17466,
+   "input_tusd": 656799.7528413429,
+   "surcharge_tusd": 9501.265224602867,
+   "fee_tusd": 11471.664483126897,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": -1566.9634587706398
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 0.5,
+   "fee": 17189,
+   "input_tusd": 656614.6373597936,
+   "surcharge_tusd": 9316.705089498111,
+   "fee_tusd": 11286.549001577494,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": -1381.8479772212352
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 1.0,
+   "fee": 18024,
+   "input_tusd": 657172.9740423555,
+   "surcharge_tusd": 9873.36676201235,
+   "fee_tusd": 11844.885684139415,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": -1940.1846597831588
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 1.5,
+   "fee": 17189,
+   "input_tusd": 234799.27572844634,
+   "surcharge_tusd": 3331.566923310925,
+   "fee_tusd": 4035.964750496264,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": 1350.8487819843901
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 2.0,
+   "fee": 16631,
+   "input_tusd": 234666.04192114057,
+   "surcharge_tusd": 3198.7328174270674,
+   "fee_tusd": 3902.7309431904887,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": 1484.0825892901655
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 3.0,
+   "fee": 16354,
+   "input_tusd": 249236.29095185522,
+   "surcharge_tusd": 3328.301429371075,
+   "fee_tusd": 4076.0103022266403,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": 1578.29118012256
+  },
+  {
+   "run": "run-b",
+   "move": "2",
+   "delay": 5.0,
+   "fee": 16354,
+   "input_tusd": 271200.1602402641,
+   "surcharge_tusd": 3621.6069398484865,
+   "fee_tusd": 4435.207420569279,
+   "static_loss": 7962.891330199138,
+   "tremor_loss": 1605.4593667000208
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 0.0,
+   "fee": 13822,
+   "input_tusd": 503756.1904368425,
+   "surcharge_tusd": 5451.64949290751,
+   "fee_tusd": 6962.918064218036,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": -814.3817194633617
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 0.5,
+   "fee": 14030,
+   "input_tusd": 503862.46272465127,
+   "surcharge_tusd": 5557.6029638529035,
+   "fee_tusd": 7069.190352026857,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": -920.6540072721828
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 1.0,
+   "fee": 13614,
+   "input_tusd": 503649.9629684773,
+   "surcharge_tusd": 5345.740706947418,
+   "fee_tusd": 6856.69059585285,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": -708.1542510981749
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 1.5,
+   "fee": 13406,
+   "input_tusd": 503543.7802912084,
+   "surcharge_tusd": 5239.876577710314,
+   "fee_tusd": 6750.5079185839395,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": -601.9715738292646
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 2.0,
+   "fee": 13197,
+   "input_tusd": 190349.90981141035,
+   "surcharge_tusd": 1940.9980303469515,
+   "fee_tusd": 2512.0477597811823,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": 914.3848648890096
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 3.0,
+   "fee": 12990,
+   "input_tusd": 201389.67816121434,
+   "surcharge_tusd": 2011.8828848305313,
+   "fee_tusd": 2616.051919314174,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": 968.369457419356
+  },
+  {
+   "run": "run-b",
+   "move": "3",
+   "delay": 5.0,
+   "fee": 12781,
+   "input_tusd": 218002.504074528,
+   "surcharge_tusd": 2132.2824923529583,
+   "fee_tusd": 2786.2900045765423,
+   "static_loss": 4653.671934405756,
+   "tremor_loss": 1027.1182797110575
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 0.0,
+   "fee": 13070,
+   "input_tusd": 475527.93099212076,
+   "surcharge_tusd": 4788.566265090656,
+   "fee_tusd": 6215.150058067018,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": -694.8068663190761
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 0.5,
+   "fee": 12877,
+   "input_tusd": 475434.95687371655,
+   "surcharge_tusd": 4695.871069041698,
+   "fee_tusd": 6122.175939662849,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": -601.8327479149063
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 1.0,
+   "fee": 13264,
+   "input_tusd": 475621.42349529534,
+   "surcharge_tusd": 4881.778290755711,
+   "fee_tusd": 6308.642561241597,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": -788.2993694936551
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 1.5,
+   "fee": 12683,
+   "input_tusd": 475341.5376561467,
+   "surcharge_tusd": 4602.7321091244685,
+   "fee_tusd": 6028.756722092909,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": -508.41353034496575
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 2.0,
+   "fee": 12489,
+   "input_tusd": 180968.8854558999,
+   "surcharge_tusd": 1717.2137540910342,
+   "fee_tusd": 2260.120410458734,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": 816.8471929453591
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 3.0,
+   "fee": 12296,
+   "input_tusd": 191351.399048216,
+   "surcharge_tusd": 1778.8026055522162,
+   "fee_tusd": 2352.856802696864,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": 864.5815041122428
+  },
+  {
+   "run": "run-b",
+   "move": "4",
+   "delay": 5.0,
+   "fee": 12102,
+   "input_tusd": 201762.5569411035,
+   "surcharge_tusd": 1836.442793277924,
+   "fee_tusd": 2441.7304641012347,
+   "static_loss": 4108.168324343567,
+   "tremor_loss": 912.6224290522534
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 0.0,
+   "fee": 9083,
+   "input_tusd": 295153.49729971174,
+   "surcharge_tusd": 1795.4187240741464,
+   "fee_tusd": 2680.879215973282,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": -222.5287239965315
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 0.5,
+   "fee": 8854,
+   "input_tusd": 295085.3033596851,
+   "surcharge_tusd": 1727.4293658675965,
+   "fee_tusd": 2612.685275946652,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": -154.33478396990174
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 1.0,
+   "fee": 8854,
+   "input_tusd": 295085.3033596851,
+   "surcharge_tusd": 1727.4293658675965,
+   "fee_tusd": 2612.685275946652,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": -154.33478396990174
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 1.5,
+   "fee": 8739,
+   "input_tusd": 295051.0693790419,
+   "surcharge_tusd": 1693.2980871663215,
+   "fee_tusd": 2578.4512953034473,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": -120.10080332669699
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 2.0,
+   "fee": 8509,
+   "input_tusd": 119513.87712697264,
+   "surcharge_tusd": 658.4019490924924,
+   "fee_tusd": 1016.9435804734103,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": 361.3017379751052
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 3.0,
+   "fee": 8509,
+   "input_tusd": 125737.17984768205,
+   "surcharge_tusd": 692.6861237808805,
+   "fee_tusd": 1069.8976633239265,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": 365.80898674043414
+  },
+  {
+   "run": "run-b",
+   "move": "5",
+   "delay": 5.0,
+   "fee": 8394,
+   "input_tusd": 135074.03707798364,
+   "surcharge_tusd": 728.5893559986438,
+   "fee_tusd": 1133.8114672325946,
+   "static_loss": 1578.2924636405262,
+   "tremor_loss": 385.59263425998836
+  }
+ ],
+ "callbacks": {
+  "run-a:1": [
+   80120,
+   1.2018e-07
+  ],
+  "run-a:2": [
+   80096,
+   1.20144e-07
+  ],
+  "run-a:3": [
+   80096,
+   1.20144e-07
+  ],
+  "run-a:4": [
+   80096,
+   1.20144e-07
+  ],
+  "run-a:5": [
+   80096,
+   1.20144e-07
+  ],
+  "run-a:6": [
+   80096,
+   1.20144e-07
+  ],
+  "run-b:1": [
+   80096,
+   1.20144e-07
+  ],
+  "run-b:2": [
+   80096,
+   1.20144e-07
+  ],
+  "run-b:3": [
+   80096,
+   1.20144e-07
+  ],
+  "run-b:4": [
+   80096,
+   1.20144e-07
+  ],
+  "run-b:5": [
+   80096,
+   1.20144e-07
+  ]
+ }
+}
