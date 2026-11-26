@@ -197,6 +197,25 @@ The test pushed the price feed 5% above the market while the Base pool stayed at
 
 The trade-off: an attacker who can move one source can switch the surcharge off, but never on. The worst case is a pool that behaves like an ordinary Uniswap pool. Full record: `experiment/results/manipulation.json`.
 
+### What LPs earned, and what it cost to run
+
+The surcharge stays in the Tremor pool as fees for its LPs. Running the loop costs gas on two chains for every market move, whatever the size of the trades that follow. Measured from the 11 live moves and 77 bot trades (`experiment/costs.py`, raw numbers in `experiment/results/costs.json`):
+
+| | Measured |
+| --- | --- |
+| Surcharge paid to Tremor LPs, all 77 bot trades | **276,979 tUSD** |
+| Fee on an arbitrage trade (median) | **1.30%**, so a **1.00% surcharge** on top of the normal 0.30% |
+| Reactive side, per market move | **2** reactive transactions (one per Base event) of about **135,000 gas** each at **100 gwei**: **0.027 REACT** |
+| Unichain side, per market move | **2** callbacks of about **80,100 gas** each |
+
+What that means on mainnet, worked out rather than measured:
+
+- **Reactive.** Reactive mainnet prices gas at about the same level: since the Kolka upgrade a plain token transfer costs about 0.0021 REACT ([Reactive blog](https://blog.reactive.network/kolka-hardfork-is-live/)), which is 100 gwei. So a move costs about 0.027 REACT. REACT has traded below $0.01 in recent months ([CoinPaprika](https://coinpaprika.com/ko/coin/react-reactive-network)), which puts that under a hundredth of a cent.
+- **Unichain.** Two callbacks are about 160,000 gas. Even at an assumed 0.1 gwei and an assumed ETH price of $4,000, both far above what an L2 usually charges, that is about $0.06 per move.
+- **Break-even.** With a 1% surcharge, a single arbitrage trade of about $6 pays for a whole move under those generous assumptions. The cost per move is fixed, while the surcharge grows with the size of the gap and the trade.
+
+The surcharge total is in test tokens: its size depends on how much liquidity we put in the test pools, so read it as proof that the fee is charged and kept, not as a revenue forecast.
+
 ### Run the experiment yourself
 
 ```bash
@@ -207,7 +226,18 @@ python3 experiment/chart.py
 python3 experiment/manipulation.py   # the live manipulation test
 python3 experiment/fastbot.py        # the live fast-bot test
 python3 experiment/modes.py          # the four-mode comparison
+python3 experiment/costs.py          # cost per update vs surcharge earned
 ```
+
+## Path to mainnet
+
+The testnet build proves the loop and the fee. Three things change on the way to a real deployment.
+
+**Real price sources.** On testnet, both Base sources are ours: a Uniswap v4 pool we trade and a feed we report to. On mainnet, the reactive contract would watch sources nobody in the project controls: the deepest pool for the pair on another chain, and a price oracle feed such as Chainlink or Pyth. TremorReactive already decodes each source by its kind and checks how closely they agree, so a new source is a new decoder, not a new design. A third source and a median would let one bad source be outvoted, instead of only switching the surcharge off as it does now.
+
+**Why arbitrage still trades Tremor pools.** The surcharge is always smaller than the gap (a fuzz test checks this), so a Tremor pool that is off the market still pays an arbitrageur to correct it. Skipping it doesn't help a bot: the gap belongs to that pool, and correcting a static pool somewhere else doesn't close it, so the profit is left for the next bot. Ordinary traders, whose trades don't close the gap, pay the normal fee, so routers see a Tremor pool as an ordinary pool for everyday flow.
+
+**The window before the update.** An arbitrageur that sees the move first and lands before Tremor's update pays the normal fee, as the fast-bot test showed. That window is the loop time, Base event to Lasna to Unichain, which measured 2 to 3 seconds. It gets smaller as each chain's blocks get faster, and smaller again if one source sits closer to where prices are set, such as an oracle that pushes exchange prices. It can't reach zero, because no on-chain signal exists before the market event itself.
 
 ## Repository layout
 
@@ -225,6 +255,7 @@ experiment/
   manipulation.py             Live manipulation test
   fastbot.py                  Live fast-bot test (pre-signed trades)
   modes.py                    Live four-mode comparison
+  costs.py                    Cost per Reactive update vs the surcharge LPs earned
   chart.py                    Draws the results chart
   results/                    Raw data from each run
 dashboard/
