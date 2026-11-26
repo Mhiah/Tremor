@@ -1,0 +1,70 @@
+{
+  "trials": 56,
+  "loop_latency_block_s": {
+    "median": 2.0,
+    "p95": 3.0,
+    "min": 2,
+    "max": 3
+  },
+  "loop_latency_wall_s": {
+    "median": 4.43,
+    "p95": 5.15
+  },
+  "total_lp_loss_tusd": {
+    "static": 304502.6107,
+    "tremor": -10501.5612,
+    "avoided_pct": 103.4
+  },
+  "by_delay": [
+    {
+      "delay_s": 0.0,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": -10303.2962,
+      "lp_loss_avoided_pct": 123.7
+    },
+    {
+      "delay_s": 0.5,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": -9349.8135,
+      "lp_loss_avoided_pct": 121.5
+    },
+    {
+      "delay_s": 1.0,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": -8672.1279,
+      "lp_loss_avoided_pct": 119.9
+    },
+    {
+      "delay_s": 1.5,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": -6265.4464,
+      "lp_loss_avoided_pct": 114.4
+    },
+    {
+      "delay_s": 2.0,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": 7602.6583,
+      "lp_loss_avoided_pct": 82.5
+    },
+    {
+      "delay_s": 3.0,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": 8132.5025,
+      "lp_loss_avoided_pct": 81.3
+    },
+    {
+      "delay_s": 5.0,
+      "trials": 8,
+      "static_lp_loss_tusd": 43500.373,
+      "tremor_lp_loss_tusd": 8353.9619,
+      "lp_loss_avoided_pct": 80.8
+    }
+  ],
+  "notes": "LP loss = arbitrageur profit valued at the market price, i.e. loss versus a pool that always had the right price. Delays are a controlled experiment: the bot is our own script."
+}

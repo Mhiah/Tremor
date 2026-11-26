@@ -10,7 +10,7 @@ Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Rea
 
 **Try the loop yourself:** on the dashboard, press *Push the price up* or *Push the price down*. The site trades the Base Sepolia pool and reports the new price to the feed, then you watch Reactive Lasna validate it and the Tremor pool on Unichain Sepolia update, usually within about 3 seconds. Every step links to its transaction. Moves are limited to one a minute and pause on their own if the Reactive contract's test funds run low, so the loop keeps working.
 
-> **Status: live on testnet, experiment done.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in 2 to 3 seconds, with no bot or server. Across 11 live market moves, LPs in the Tremor pool lost about 82% less to arbitrage than LPs in an identical static pool.
+> **Status: live on testnet, experiment done.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in 2 to 3 seconds, with no bot or server. Across 19 live market moves, LPs in the Tremor pool lost about 83% less to arbitrage than LPs in an identical static pool.
 
 ---
 
@@ -126,13 +126,13 @@ Tremor was tested live on testnet against an identical pool without it. Every ma
 
 **LP loss** is what the arbitrage bot made, valued at the market price. That is exactly what the pool's LPs lost compared with a pool that always had the right price.
 
-![LP loss to arbitrage, static pool vs Tremor pool, over 11 market moves](experiment/charts/lp-loss-by-move.png)
+![LP loss to arbitrage, static pool vs Tremor pool, over 19 market moves](experiment/charts/lp-loss-by-move.png)
 
 | What we measured | Result |
 | --- | --- |
-| Full loop, Base event to Unichain callback | **2 to 3 s** (median 3 s over 11 moves, from block timestamps) |
-| LP loss, bots that traded with Tremor's update in place | **about 82% lower** in the Tremor pool than in the static pool |
-| LP loss, every bot trade (77 trades) | **97% lower** in the Tremor pool |
+| Full loop, Base event to Unichain callback | **2 to 3 s** (median 3 s over 19 moves, from block timestamps) |
+| LP loss, bots that traded with Tremor's update in place | **about 83% lower** in the Tremor pool than in the static pool |
+| LP loss, every bot trade (133 trades) | **99.8% lower** in the Tremor pool: 1,254 tUSD against 662,092 tUSD in the static pools |
 | Bots that planned their trade on the old fee | lost money in the Tremor pool, so its LPs came out ahead |
 | Ordinary trades away from the reference | normal 0.30% fee, every time |
 
@@ -140,15 +140,15 @@ Tremor was tested live on testnet against an identical pool without it. Every ma
 
 - **Rational arbitrage after the update lands.** The bot reads the fee before trading and stops where trading stops paying. Tremor's surcharge takes most of the gap, so LPs keep most of what they would have lost. The pool still gets corrected, because the bot still trades.
 - **Bots that raced the update.** Some bots read the old fee, then their trade landed after Tremor's update. They paid the surcharge on a trade sized for the normal fee, and lost money. That is why the all-trades figure is above the rational-bot figure.
-- **Speed.** Reactive's loop landed every update in 2 to 3 seconds. The experiment's bots quoted, estimated and sent over public RPC endpoints, so they needed 6 to 12 seconds to land a trade and always arrived after the update. A faster bot does beat it: see the fast-bot test below.
+- **Speed.** Reactive's loop landed every update in 2 to 3 seconds. The experiment's bots quoted, estimated and sent over public RPC endpoints, so they needed 4 to 12 seconds to land a trade and always arrived after the update. A faster bot does beat it: see the fast-bot test below.
 
 **Honest limits**
 
 - The market, the price feed and the arbitrage bots are our own scripts on testnet. Real markets move without warning and real arbitrageurs are faster.
 - An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. Tremor does not stop that, and the fast-bot test below shows it happening live. The faster Reactive's loop, the smaller that window.
-- 11 market moves is a small sample, limited by testnet funds. The runner is in the repo, so anyone can run more.
+- 19 market moves is still a small sample, limited by testnet funds. The runner is in the repo, so anyone can run more.
 
-The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves). Every row links to its transactions.
+The raw data is in `experiment/results/` (`run-a`: bot clock starts when the Base trade is confirmed; `run-b`: bot clock starts when the market moves; `run-c`: the same as `run-b`, 8 more moves run after topping up the Reactive contract). Every row links to its transactions.
 
 ### What each part adds: four modes, live
 
@@ -199,18 +199,18 @@ The trade-off: an attacker who can move one source can switch the surcharge off,
 
 ### What LPs earned, and what it cost to run
 
-The surcharge stays in the Tremor pool as fees for its LPs. Running the loop costs gas on two chains for every market move, whatever the size of the trades that follow. Measured from the 11 live moves and 77 bot trades (`experiment/costs.py`, raw numbers in `experiment/results/costs.json`):
+The surcharge stays in the Tremor pool as fees for its LPs. Running the loop costs gas on two chains for every market move, whatever the size of the trades that follow. Measured from the 19 live moves and 133 bot trades (`experiment/costs.py`, raw numbers in `experiment/results/costs.json`):
 
 | | Measured |
 | --- | --- |
-| Surcharge paid to Tremor LPs, all 77 bot trades | **276,979 tUSD** |
-| Fee on an arbitrage trade (median) | **1.30%**, so a **1.00% surcharge** on top of the normal 0.30% |
-| Reactive side, per market move | **2** reactive transactions (one per Base event) of about **135,000 gas** each at **100 gwei**: **0.027 REACT** |
+| Surcharge paid to Tremor LPs, all 133 bot trades | **541,183 tUSD** |
+| Fee on an arbitrage trade (median) | **1.32%**, so a **1.02% surcharge** on top of the normal 0.30% |
+| Reactive side, per market move | **2** reactive transactions (one per Base event) of about **138,000 gas** each at **100 gwei**: **0.028 REACT** |
 | Unichain side, per market move | **2** callbacks of about **80,100 gas** each |
 
 What that means on mainnet, worked out rather than measured:
 
-- **Reactive.** Reactive mainnet prices gas at about the same level: since the Kolka upgrade a plain token transfer costs about 0.0021 REACT ([Reactive blog](https://blog.reactive.network/kolka-hardfork-is-live/)), which is 100 gwei. So a move costs about 0.027 REACT. REACT has traded below $0.01 in recent months ([CoinPaprika](https://coinpaprika.com/ko/coin/react-reactive-network)), which puts that under a hundredth of a cent.
+- **Reactive.** Reactive mainnet prices gas at about the same level: since the Kolka upgrade a plain token transfer costs about 0.0021 REACT ([Reactive blog](https://blog.reactive.network/kolka-hardfork-is-live/)), which is 100 gwei. So a move costs about 0.028 REACT. REACT has traded below $0.01 in recent months ([CoinPaprika](https://coinpaprika.com/ko/coin/react-reactive-network)), which puts that under a hundredth of a cent.
 - **Unichain.** Two callbacks are about 160,000 gas. Even at an assumed 0.1 gwei and an assumed ETH price of $4,000, both far above what an L2 usually charges, that is about $0.06 per move.
 - **Break-even.** With a 1% surcharge, a single arbitrage trade of about $6 pays for a whole move under those generous assumptions. The cost per move is fixed, while the surcharge grows with the size of the gap and the trade.
 

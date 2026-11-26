@@ -1,6 +1,6 @@
 """Cost vs revenue: what each Reactive update cost on-chain, and what the surcharge paid Tremor LPs.
 
-Reads every live trial in results/run-a and results/run-b, then from Unichain Sepolia:
+Reads every live trial in results/run-*, then from Unichain Sepolia:
 - the Tremor pool's Swap event for each bot trade (amount in and the fee charged), and
 - the gas used by each ReferenceStore callback.
 Reactive-side gas is read from TremorReactive's transactions on Lasna (see LASNA_TXS below).
@@ -15,7 +15,7 @@ SWAP = Web3.keccak(text="Swap(bytes32,address,int128,int128,uint160,uint128,int2
 if not SWAP.startswith("0x"): SWAP="0x"+SWAP
 def s128(h): v=int(h,16); return v-(1<<256) if v>=1<<255 else v
 rows=[]
-for run in ("run-a","run-b"):
+for run in sorted(os.path.basename(p) for p in __import__("glob").glob(os.path.join(HERE,"results","run-*"))):
     rows += [dict(r, run=run) for r in csv.DictReader(open(os.path.join(HERE,"results",run,"trials.csv")))]
 out=[]; refcost={}
 for r in rows:

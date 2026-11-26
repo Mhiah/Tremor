@@ -73,7 +73,7 @@ def main():
             "moves": len(moves), "trades": len(rows),
             "loopMedianS": statistics.median(loops), "loopMinS": min(loops), "loopMaxS": max(loops),
             "lossCutPct": round(100 * (1 - t_saw / s_saw)),
-            "lossCutAllPct": round(100 * (1 - t_all / s_all)),
+            "lossCutAllPct": round(100 * (1 - t_all / s_all), 1),
         },
     }
     with open(OUT, "w") as f:

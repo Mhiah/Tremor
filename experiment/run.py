@@ -34,6 +34,8 @@ from decimal import Decimal, getcontext
 
 from eth_account import Account
 from web3 import Web3
+from web3.providers.rpc.utils import REQUEST_RETRY_ALLOWLIST, ExceptionRetryConfiguration
+import requests
 
 getcontext().prec = 80
 Q96 = 2**96
@@ -105,7 +107,9 @@ def signed(word):
 
 class Chain:
     def __init__(self, rpc, key):
-        self.w3 = Web3(Web3.HTTPProvider(rpc, request_kwargs={"timeout": 30}))
+        # Public RPCs and proxies drop connections now and then: retry reads with backoff.
+        self.w3 = Web3(Web3.HTTPProvider(rpc, request_kwargs={"timeout": 30},
+                                         exception_retry_configuration=ExceptionRetryConfiguration(errors=(requests.exceptions.ConnectionError, requests.exceptions.Timeout), retries=10, backoff_factor=1.0, method_allowlist=REQUEST_RETRY_ALLOWLIST)))
         self.acct = Account.from_key(key)
         self.lock = threading.Lock()
         self.nonce = self.w3.eth.get_transaction_count(self.acct.address, "pending")
