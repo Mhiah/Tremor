@@ -31,13 +31,13 @@ window.TREMOR_RESULTS = {
   }
  ],
  "costs": {
-  "surchargeTusd": 276979,
-  "medianSurchargeBps": 100,
-  "reactPerMove": 0.027,
-  "reactiveGasEach": 135118,
+  "surchargeTusd": 541183,
+  "medianSurchargeBps": 102,
+  "reactPerMove": 0.0276,
+  "reactiveGasEach": 137795,
   "callbackGasEach": 80096,
-  "moves": 11,
-  "trades": 77
+  "moves": 19,
+  "trades": 133
  },
  "moves": [
   {
@@ -171,15 +171,111 @@ window.TREMOR_RESULTS = {
    "loopS": 2,
    "baseTx": "0x535c7cf67c02d798c0213ebb6b5dc698bf954ced65cde085de070fb54fa059e6",
    "refTx": "0x6fffd8abe63b4ac0f239d056bfc119a6773b139d0cac403b6df91ab453f51bec"
+  },
+  {
+   "label": "C1",
+   "movePct": -1.9,
+   "from": 2942.65,
+   "to": 2886.6,
+   "staticLoss": 3542.06,
+   "tremorLoss": 683.47,
+   "tremorFeeBps": 120.1,
+   "loopS": 3,
+   "baseTx": "0x2974d98260e11ea1907a20c3f9c03a919b7b1887cc7eabbd2f21fac50f553f68",
+   "refTx": "0xfd2fc896bc56c35e894e73de247ad1c406bf41cd957da2d8d56ab172d433b815"
+  },
+  {
+   "label": "C2",
+   "movePct": 2.85,
+   "from": 2886.6,
+   "to": 2968.83,
+   "staticLoss": 8582.22,
+   "tremorLoss": 1521.82,
+   "tremorFeeBps": 173.8,
+   "loopS": 2,
+   "baseTx": "0x2a72e0a4e574d7628e37ed4fcc8bd0697161c011cb1eaa9cc6304c3115c1dc8c",
+   "refTx": "0x153dcefd98301b6c89f941fbd49be9d37a82d884270dc71066f5efec2bf5acf8"
+  },
+  {
+   "label": "C3",
+   "movePct": -2.02,
+   "from": 2968.83,
+   "to": 2908.98,
+   "staticLoss": 4068.9,
+   "tremorLoss": -60.68,
+   "tremorFeeBps": 128.8,
+   "loopS": 2,
+   "baseTx": "0xee5ade3352d1bb61a2b24a44570746af00bec6a3a299aad0c4803698821feec9",
+   "refTx": "0x5f3d17c12bef31cefaddf3371f0814812209bf4653a377de725c7e41919c45f9"
+  },
+  {
+   "label": "C4",
+   "movePct": -2.85,
+   "from": 2869.15,
+   "to": 2787.39,
+   "staticLoss": 8872.0,
+   "tremorLoss": 1672.27,
+   "tremorFeeBps": 174.8,
+   "loopS": 3,
+   "baseTx": "0x9293f7e10b535160400680bc9635bff92de91d950f9c08a20b71056b7d79b0a0",
+   "refTx": "0x1b3cec45e653bd4749b7b435cb7a40c9ff92de25200fea4d23f869054220d273"
+  },
+  {
+   "label": "C5",
+   "movePct": 2.78,
+   "from": 2787.39,
+   "to": 2865.01,
+   "staticLoss": 8020.39,
+   "tremorLoss": 1454.75,
+   "tremorFeeBps": 169.1,
+   "loopS": 2,
+   "baseTx": "0x38b316ff4fcfea6b784470ecfd208e7e6d1328785d7d2188b5a316c6a2db36dd",
+   "refTx": "0xc32f00a8ccbdece4c4302a4a712f1cffcd944bfc067626bd20eacdb0a041e810"
+  },
+  {
+   "label": "C6",
+   "movePct": 2.18,
+   "from": 2865.01,
+   "to": 2927.59,
+   "staticLoss": 4687.27,
+   "tremorLoss": 827.45,
+   "tremorFeeBps": 136.8,
+   "loopS": 2,
+   "baseTx": "0x23a977b36a9352080ee5c234ff037fd4913e64b7412f60600a1925c76b9f56f9",
+   "refTx": "0x3a9226183afb347eb06bc9411757fddc88f1784756e6526b7b6f3663ea088b61"
+  },
+  {
+   "label": "C7",
+   "movePct": 2.06,
+   "from": 2927.59,
+   "to": 2987.9,
+   "staticLoss": 4137.83,
+   "tremorLoss": 744.08,
+   "tremorFeeBps": 129.2,
+   "loopS": 2,
+   "baseTx": "0xea0e19e6fc9197581c5192a554253fc4f2eee5c0563d75409ffdd5b02171ad3f",
+   "refTx": "0xc75ea9f2506694ce99efc3a3882ad47eaf2982346e2994b6d72aa2a38aa3fa27"
+  },
+  {
+   "label": "C8",
+   "movePct": 1.38,
+   "from": 2987.9,
+   "to": 3029.25,
+   "staticLoss": 1589.7,
+   "tremorLoss": 323.08,
+   "tremorFeeBps": 88.5,
+   "loopS": 3,
+   "baseTx": "0x4315a0611c13e54c61f7b026db60721ee65285cef4ae878c108c7415c0856823",
+   "refTx": "0x96583dc4375292e6207f0d675fdefe9e7b7302a18c10277d24429935aa99ee38"
   }
  ],
  "totals": {
-  "moves": 11,
-  "trades": 77,
+  "moves": 19,
+  "trades": 133,
   "loopMedianS": 3,
   "loopMinS": 2,
   "loopMaxS": 3,
-  "lossCutPct": 82,
-  "lossCutAllPct": 97
+  "lossCutPct": 83,
+  "lossCutAllPct": 99.8
  }
 };

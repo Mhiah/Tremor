@@ -242,7 +242,7 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     <h2 id="results-h">What the live experiment showed</h2>
     <p class="intro">Each market move on Base was tested against pairs of pools on Unichain that are identical except for Tremor. A bot arbitraged both pools of a pair at the same moment. LP loss is what the bot made, valued at the market price.</p>
     <div class="headline">
-      <div class="big" id="cut">82%</div>
+      <div class="big" id="cut">83%</div>
       <p>less lost to arbitrage by <strong>Tremor LPs</strong> than by LPs in the identical static pool, when the bot traded after Tremor's update landed.</p>
     </div>
     <div class="chart" id="chart">
@@ -252,8 +252,8 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     </div>
     <div class="facts">
       <div><div class="v" id="f-loop">2–3 s</div><div class="k">Base event to Unichain update, every move</div></div>
-      <div><div class="v" id="f-trades">77 trades</div><div class="k">across <span id="f-moves">11</span> market moves</div></div>
-      <div><div class="v" id="f-all">97%</div><div class="k">lower LP loss over every trade, including bots that planned on the old fee and lost money</div></div>
+      <div><div class="v" id="f-trades">133 trades</div><div class="k">across <span id="f-moves">19</span> market moves</div></div>
+      <div><div class="v" id="f-all">99.8%</div><div class="k">lower LP loss over every trade, including bots that planned on the old fee and lost money</div></div>
     </div>
     <details class="table"><summary>See the numbers as a table</summary><div class="proof-wrap"><table class="proof" id="moves-table"></table></div></details>
 
@@ -327,7 +327,7 @@ footer { margin: 80px 0 0; padding: 26px 0 40px; border-top: 1px solid var(--rul
     <ul class="limits">
       <li>The market, the price feed and the arbitrage bots are our own scripts on testnet.</li>
       <li>An arbitrageur that lands its trade in the 2 to 3 seconds before Tremor's update pays only the normal fee. A test bot that pre-signed its trades did exactly that on all 3 tries, landing in the same second as the market move; the experiment's slower bots never did.</li>
-      <li>11 market moves is a small sample, limited by testnet funds. The runner is in the repository so anyone can run more.</li>
+      <li>19 market moves is still a small sample, limited by testnet funds. The runner is in the repository so anyone can run more.</li>
     </ul>
   </section>
 
