@@ -6,7 +6,7 @@
 
 Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Reactive Omni for the Reactive Omni Buildathon, Track 1: *Every Second Counts*.
 
-**Live dashboard:** [tremor.myacxt.site](https://tremor.myacxt.site) shows the loop, the experiment results and the pool's current fee, read live from Unichain Sepolia.
+**Live dashboard:** [https://tremor.myacxt.site](https://tremor.myacxt.site) shows the loop, the experiment results and the pool's current fee, read live from Unichain Sepolia.
 
 **Try the loop yourself:** on the dashboard, press *Push the price up* or *Push the price down*. The site trades the Base Sepolia pool and reports the new price to the feed, then you watch Reactive Lasna validate it and the Tremor pool on Unichain Sepolia update, usually within about 3 seconds. Every step links to its transaction. Moves are limited to one a minute and pause on their own if the Reactive contract's test funds run low, so the loop keeps working.
 
