@@ -8,6 +8,8 @@ Tremor is a cross-chain liquidity protection system for Uniswap v4, built on Rea
 
 **Live dashboard:** [tremor.myacxt.site](https://tremor.myacxt.site) shows the loop, the experiment results and the pool's current fee, read live from Unichain Sepolia.
 
+**Try the loop yourself:** on the dashboard, press *Push the price up* or *Push the price down*. The site trades the Base Sepolia pool and reports the new price to the feed, then you watch Reactive Lasna validate it and the Tremor pool on Unichain Sepolia update, usually within about 3 seconds. Every step links to its transaction. Moves are limited to one a minute and pause on their own if the Reactive contract's test funds run low, so the loop keeps working.
+
 > **Status: live on testnet, experiment done.** All four contracts are deployed and the full loop runs on-chain: a price move on Base Sepolia reaches the Tremor pool on Unichain Sepolia through Reactive Lasna in 2 to 3 seconds, with no bot or server. Across 11 live market moves, LPs in the Tremor pool lost about 82% less to arbitrage than LPs in an identical static pool.
 
 ---
@@ -225,6 +227,11 @@ experiment/
   modes.py                    Live four-mode comparison
   chart.py                    Draws the results chart
   results/                    Raw data from each run
+dashboard/
+  index.html                  Live dashboard (tremor.myacxt.site), reads all three chains from the browser
+  api/move.js                 Serverless function behind the move buttons: trades the Base pool and
+                              reports to the feed, with a one-minute cooldown and a Reactive funds check
+  data.js                     Experiment results exported for the dashboard
 test/
   TremorHook.t.sol            Hook tests against the real v4 PoolManager, including real swaps
   TremorFeeMath.t.sol         Fee maths, including a fuzz test that arbitrage always keeps a share
